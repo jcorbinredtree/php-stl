@@ -70,7 +70,9 @@ class HTMLTag extends Tag
         $maxlength = $this->getUnquotedAttr($element, 'maxlength', 255);
         $enabled = $this->getUnquotedAttr($element, 'enabled');
 
-        $this->compiler->write('<input type="text" name="' . $name . '" ');
+        $type = $this->getUnquotedAttr($element, 'type', 'text');
+
+        $this->compiler->write('<input type="' . $type . '" name="' . $name . '" ');
         $this->compiler->write('id="' . $id . '" maxlength="' . $maxlength .'" ');
 
         if ($enabled) {
