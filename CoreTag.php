@@ -233,6 +233,7 @@ class CoreTag extends Tag
      * @param string default optional - the default value to use in the event of an empty value
      * @param string var optional - the variable to store the output in
      * @param string format optional - format options,
+     *                 "int" => formats as integer
      *                 "money" => formats as us money,
      *                 "boolean" => formats as Yes or No
      *                 "date:xxx" => formats as date, where xxx is the format string used by date()
@@ -253,6 +254,9 @@ class CoreTag extends Tag
         if (preg_match('/^date:(.+)/', $format, $matches)) {
             $fstr = $matches[1];
             $value = "date('$fstr',$value)";
+        }
+        elseif ($format == 'int') {
+            $value = "(int) $value";
         }
         elseif ($format == 'money') {
             $value = "money_format('%n', $value)";
@@ -307,6 +311,9 @@ class CoreTag extends Tag
         $type = $this->requiredAttr($element, 'type', false);
 
         switch ($type) {
+            case 'xhtml 1.0':
+                $this->compiler->write('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">');
+                break;
             case 'xhtml 1.1':
                 $this->compiler->write('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">');
                 break;
