@@ -221,8 +221,28 @@ class CoreTag extends Tag
     public function display(DOMElement &$element)
     {
         $template = $this->requiredAttr($element, 'template');
+        $args = $this->getUnquotedAttr($element, 'args');
+        $holder = '__' . uniqid();
+
+        if ($args) {
+            $args = explode(',', $args);
+            $this->compiler->write('<?php $this->' . $holder . '=array();');
+            foreach ($args as $al) {
+                list($name, $val) = explode('=', $al);
+
+                $this->compiler->write('$this->' . $holder . '["' . $name . '"]=' . $val . ';');
+                $this->compiler->write('$this->' . $name . '=' . $val . ';');
+            }
+            $this->compiler->write('?>');
+        }
 
         $this->compiler->write('<?php $this->display(' . $template . '); ?>');
+
+        if (count($args)) {
+            $this->compiler->write('<?php foreach($this->' . $holder . ' as $__n=>$__v){');
+            $this->compiler->write('$this->$__n=$__v;');
+            $this->compiler->write('}?>');
+        }
     }
 
     /**
