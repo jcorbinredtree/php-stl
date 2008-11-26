@@ -353,7 +353,7 @@ class Compiler
             $output = preg_replace('/[$]this[-][>]_tpl_vars[[]'."'(.+?)'[]][(]/i", '$this->$1(', $output);
         }
 
-        return preg_replace('/[.]{2}/', '.', $output);
+        return $output;
     }
 
     /**
