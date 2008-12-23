@@ -1,4 +1,5 @@
 <?php
+
 /**
  * CoreTag class definition
  *

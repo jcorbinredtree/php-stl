@@ -113,6 +113,36 @@ class HTMLTag extends Tag
 
 
     /**
+     * A radio item
+     *
+     * @param string required name - the name you'd like to give this element
+     * @param string optional id - the id you want for this element (defaults to name)
+     * @param string optional value - the value for this field
+     * @param string optional checked - a boolean value to select the box or not
+     */
+    public function radio(DOMElement &$element)
+    {
+        $name = $this->requiredAttr($element, 'name', false);
+        $id = $this->getUnquotedAttr($element, 'id', false);
+        $value = $this->getUnquotedAttr($element, 'value');
+        $checked = $this->getUnquotedAttr($element, 'checked', false);
+
+        $this->compiler->write('<input type="radio" name="' . $name . '" ');
+
+        if ($id) {
+            $this->compiler->write('id="' . $id . '" ');
+        }
+
+        $this->compiler->write('value="<?php echo ' . $value . '; ?>" ');
+
+        if ($checked) {
+            $this->compiler->write("<?php echo ($checked?'checked=\"checked\"':'');?>");
+        }
+
+        $this->compiler->write(' />');
+    }
+
+    /**
      * Displays a textarea
      *
      * @param string required name - the name you'd like to give this element
