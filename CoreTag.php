@@ -231,7 +231,9 @@ class CoreTag extends Tag
             foreach ($args as $al) {
                 list($name, $val) = explode('=', $al);
 
-                $this->compiler->write('$this->' . $holder . '["' . $name . '"]=' . $val . ';');
+                $this->compiler->write('if(property_exists($this,"' . $name . '")){');
+                $this->compiler->write('$this->' . $holder . '["' . $name . '"]=$this->' . $name . ';');
+                $this->compiler->write('}');
                 $this->compiler->write('$this->' . $name . '=' . $val . ';');
             }
             $this->compiler->write('?>');
