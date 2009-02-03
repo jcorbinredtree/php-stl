@@ -147,12 +147,13 @@ class Compiler
             return $compiler->getCompiledFile();
         }
 
+        $compiler->parse(file_get_contents($file));
+
         $fh = fopen($compiler->getCompiledFile(), 'w');
         if (!$fh) {
             die("could not open $compiler->compiledFile for writing!");
         }
 
-        $compiler->parse(file_get_contents($file));
         fwrite($fh, $compiler->buffer);
 
         fclose($fh);
