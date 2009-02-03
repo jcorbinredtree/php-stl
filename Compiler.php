@@ -149,6 +149,13 @@ class Compiler
 
         $compiler->parse(file_get_contents($file));
 
+        $compileDir = dirname($compiler->getCompiledFile());
+        if (! is_dir($compileDir)) {
+            if (! mkdir($compileDir, 0777, true)) {
+                die("could not mkdir $compileDir");
+            }
+        }
+
         $fh = fopen($compiler->getCompiledFile(), 'w');
         if (!$fh) {
             die("could not open $compiler->compiledFile for writing!");
