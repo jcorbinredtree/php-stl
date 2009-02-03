@@ -151,14 +151,22 @@ class Compiler
 
         $compileDir = dirname($compiler->getCompiledFile());
         if (! is_dir($compileDir)) {
+            ob_start();
             if (! mkdir($compileDir, 0777, true)) {
-                die("could not mkdir $compileDir");
+                $mess = ob_get_clean();
+                throw new Exception("Could not mkdir $compileDir: $mess");
+            } else {
+                ob_end_flush();
             }
         }
 
+        ob_start();
         $fh = fopen($compiler->getCompiledFile(), 'w');
         if (!$fh) {
-            die("could not open $compiler->compiledFile for writing!");
+            $mess = ob_get_clean();
+            throw new Exception("Could not write $compiler->compiledFile: $mess");
+        } else {
+            ob_end_flush();
         }
 
         fwrite($fh, $compiler->buffer);
