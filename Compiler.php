@@ -158,7 +158,7 @@ class Compiler
             ob_start();
             if (! mkdir($compileDir, 0777, true)) {
                 $mess = ob_get_clean();
-                throw new Exception("Could not mkdir $compileDir: $mess");
+                throw new RuntimeException("Could not mkdir $compileDir: $mess");
             } else {
                 ob_end_flush();
             }
@@ -168,7 +168,7 @@ class Compiler
         $fh = fopen($compiler->getCompiledFile(), 'w');
         if (!$fh) {
             $mess = ob_get_clean();
-            throw new Exception("Could not write $compiler->compiledFile: $mess");
+            throw new RuntimeException("Could not write $compiler->compiledFile: $mess");
         } else {
             ob_end_flush();
         }
