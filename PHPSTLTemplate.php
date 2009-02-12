@@ -136,12 +136,20 @@ class PHPSTLTemplate
      */
     public function fetch($template)
     {
-        $foundTemplate = $template;
         if (! self::isFileAbsolute($template)) {
             $foundTemplate = $this->pathLookup($template);
+            if (isset($foundTemplate)) {
+                $template = $foundTemplate;
+            } else {
+                throw new RuntimeException(
+                    "Unable to find template $template, ".
+                    "search path contains: ".
+                    implode(', ', $this->paths)
+                );
+            }
         }
 
-        return $this->fetchTemplate($foundTemplate);
+        return $this->fetchTemplate($template);
     }
 
     /**
