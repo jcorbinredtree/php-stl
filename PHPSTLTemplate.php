@@ -25,6 +25,11 @@
  * @link         http://php-stl.redtreesystems.com
  */
 
+// Borrowed from Pear File_Util module
+if (! defined('FILE_WIN32')) {
+    define('FILE_WIN32', defined('OS_WINDOWS') ? OS_WINDOWS : !strncasecmp(PHP_OS, 'win', 3));
+}
+
 /**
  * PHPSTLTemplate
  *
@@ -33,6 +38,26 @@
  */
 class PHPSTLTemplate
 {
+    // Borrowed from Pear File_Util::isAbsolute
+    /**
+     * Tests if a path is absolute
+     *
+     * @param $path string the path
+     *
+     * @return boolean
+     */
+    protected static function isFileAbsolute($path)
+    {
+        if (preg_match('/(?:\/|\\\)\.\.(?=\/|$)/', $path)) {
+            return false;
+        }
+        if (FILE_WIN32) {
+            return preg_match('/^[a-zA-Z]:(\\\|\/)/', $path);
+        }
+        return ($path{0} == '/') || ($path{0} == '~');
+
+    }
+
     /**
      * The compiler class to use for compilation. Defaults to 'Compiler'
      *
@@ -112,7 +137,7 @@ class PHPSTLTemplate
     public function fetch($template)
     {
         $foundTemplate = $template;
-        if (!file_exists($template)) {
+        if (! self::isFileAbsolute($template)) {
             $foundTemplate = $this->pathLookup($template);
         }
 
