@@ -86,6 +86,24 @@ class PHPSTLTemplate
     }
 
     /**
+     * Looks up the given template in the path list
+     *
+     * @param string $template a path to a template
+     * @return string
+     */
+    public function pathLookup($template)
+    {
+        foreach ($this->paths as &$path) {
+            $foundTemplate = "$path/$template";
+            if (file_exists($foundTemplate)) {
+                return $foundTemplate;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Gets a template's output
      *
      * @param string $template a path to a template
@@ -95,12 +113,7 @@ class PHPSTLTemplate
     {
         $foundTemplate = $template;
         if (!file_exists($template)) {
-            foreach ($this->paths as $path) {
-                $foundTemplate = "$path/$template";
-                if (file_exists($foundTemplate)) {
-                    break;
-                }
-            }
+            $foundTemplate = $this->pathLookup($template);
         }
 
         return $this->fetchTemplate($foundTemplate);
