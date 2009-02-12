@@ -104,7 +104,7 @@ class PHPSTLTemplate
     public function assign($name, $val)
     {
         if (!$name) {
-            throw new IllegalArgumentException('name can not be empty');
+            throw new InvalidArgumentException('name can not be empty');
         }
 
         $this->$name = $val;
