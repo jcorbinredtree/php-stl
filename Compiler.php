@@ -140,6 +140,10 @@ class Compiler
      */
     public static function compile($file, $type=Compiler::TYPE_PHPSAVANT)
     {
+        if (! file_exists($file)) {
+            throw new InvalidArgumentException("no such file $file");
+        }
+
         $compiler = new Compiler::$compilerClass($file);
         $compiler->type = $type;
 
