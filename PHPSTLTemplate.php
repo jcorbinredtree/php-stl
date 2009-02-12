@@ -93,8 +93,6 @@ class PHPSTLTemplate
      */
     public function fetch($template)
     {
-        $compiler = new $this->compiler();
-
         $foundTemplate = $template;
         if (!file_exists($template)) {
             foreach ($this->paths as $path) {
@@ -105,7 +103,23 @@ class PHPSTLTemplate
             }
         }
 
-        $compiled = $compiler->compile($foundTemplate, Compiler::TYPE_BUILTIN);
+        return $this->fetchTemplate($foundTemplate);
+    }
+
+    /**
+     * Loads the template in the given file
+     *
+     * @param template string path to a template file, no checking is done on
+     * the argument, it's the caller's responsibility to make sure it exists, if
+     * not Compiler::compile will throw an exception
+     *
+     * @return string template content
+     */
+    protected function fetchTemplate($template)
+    {
+        $compiler = new $this->compiler();
+
+        $compiled = $compiler->compile($template, Compiler::TYPE_BUILTIN);
 
         ob_start();
         include $compiled;
