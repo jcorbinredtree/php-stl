@@ -63,7 +63,9 @@ abstract class Tag
     protected function requiredAttr(DOMElement &$element, $attr, $quote=true)
     {
         if (!$element->hasAttribute($attr)) {
-            die("required attribute $attr missing from element $element->nodeName");
+            throw new InvalidArgumentException(
+                "required attribute $attr missing from element $element->nodeName"
+            );
         }
 
         $value = $element->getAttribute($attr);
@@ -130,7 +132,9 @@ abstract class Tag
                 return false;
         }
 
-        die("Invalid boolean attribute $attr specified for $element->nodeName");
+        throw new InvalidArgumentException(
+            "Invalid boolean attribute $attr specified for $element->nodeName"
+        );
     }
 
     /**
