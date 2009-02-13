@@ -72,6 +72,32 @@ class PHPSTLTemplate
      */
     private $paths = array();
 
+    public $template;
+
+    /**
+     * Constructor
+     *
+     * @param template string (optional) the template this instance is compiled from
+     */
+    public function __construct($template=null)
+    {
+        if (isset($template)) {
+           if (! self::isFileAbsolute($template)) {
+                $foundTemplate = $this->pathLookup($template);
+                if (isset($foundTemplate)) {
+                    $template = $foundTemplate;
+                } else {
+                    throw new RuntimeException(
+                        "Unable to find template $template, ".
+                        "search path contains: ".
+                        implode(', ', $this->paths)
+                    );
+                }
+            }
+            $this->template = $template;
+        }
+    }
+
     /**
      * Sets the compiler class
      *
@@ -131,6 +157,10 @@ class PHPSTLTemplate
     /**
      * Gets a template's output
      *
+     * DEPRECATED
+     *   Instead of creating a generic template and telling it to fetch things,
+     *   you should just create a template from the file and render it
+     *
      * @param string $template a path to a template
      * @return string
      */
@@ -175,12 +205,30 @@ class PHPSTLTemplate
     /**
      * Displays a template
      *
+     * DEPRECATED
+     *   see the note on fetch
+     *
      * @param string $template a path to a template
      * @return void
      */
     public function display($template)
     {
         print $this->fetch($template);
+    }
+
+    /**
+     * Renders the template
+     *
+     * Only works if the $template property is set
+     *
+     * @return string
+     */
+    public function render()
+    {
+        if (! isset($this->template)) {
+            throw new RuntimeException('template property not set');
+        }
+        return $this->fetchTemplate($this->template);
     }
 }
 
