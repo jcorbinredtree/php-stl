@@ -400,7 +400,7 @@ class Compiler
         /*
          * normalize php blocks
          */
-        $this->buffer = preg_replace('/[?][>]\s*?[<][?]php/si', '', $this->buffer);
+        $this->buffer = preg_replace('/\s*\?>\s*?<\?php\s*/si', "\n", $this->buffer);
     }
 }
 ?>
