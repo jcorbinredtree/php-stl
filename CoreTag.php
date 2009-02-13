@@ -128,18 +128,20 @@ class CoreTag extends Tag
 
         if (preg_match('/,/', $var)) {
             $desc = explode(',', $var);
-            $this->compiler->write('<?php foreach(' . $list . ' as $' . $desc[0] . ' => $' . $desc[1]    . '){ ?>');
-        }
-        else {
-            $v = '__tmpo' . uniqid();
-            $this->compiler->write('<?php $' . "$v=" . $list . ';$' . $varStatus . '=new LoopTagStatus();$' . $varStatus . '->count=count($' . $v . ');
-                                    for(;$' . $varStatus . '->index<$' . $varStatus . '->count;$' . $varStatus . '->index++){
-                                    $' . $varStatus . '->current=$' . $var . '=$' . $v . '[$' . $varStatus . '->index]; ?>' );
+            $this->compiler->write("<?php\nforeach(".$list.' as $'.$desc[0].' => $'.$desc[1].") {\n  ?>");
+        } else {
+            $v = '__tmpo'.uniqid();
+            $this->compiler->write("<?php\n\$$v=".$list.";\n");
+            $this->compiler->write("\$$varStatus = new LoopTagStatus();\n");
+            $this->compiler->write("\$$varStatus"."->count = count(\$$v);\n");
+            $this->compiler->write("for(; \$$varStatus"."->index < \$$varStatus"."->count; \$$varStatus"."->index++) {\n");
+            $this->compiler->write("\$$varStatus".'->current=$'.$var.'=$'.$v.'[$'.$varStatus.'->index];'."\n ?>");
 
         }
 
         $this->process($element);
-        $this->compiler->write('<?php } ?>');
+
+        $this->compiler->write("<?php\n}\n?>");
     }
 
     /**
