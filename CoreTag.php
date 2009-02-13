@@ -424,12 +424,12 @@ class CoreTag extends Tag
 
         if ($pre) {
             $this->compiler->write('<pre>');
-        }
-
-        $this->compiler->write("<?php print_r($object); ?>");
-
-        if ($pre) {
+            $this->compiler->write("<?php echo '$object = '; ?>");
+            $this->compiler->write("<?php echo htmlentities(print_r($object, true)); ?>");
             $this->compiler->write('</pre>');
+        } else {
+            $this->compiler->write("<?php echo '$object = '; ?>");
+            $this->compiler->write("<?php print_r($object); ?>");
         }
     }
 }
