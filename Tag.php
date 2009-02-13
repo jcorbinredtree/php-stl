@@ -66,7 +66,11 @@ abstract class Tag
             die("required attribute $attr missing from element $element->nodeName");
         }
 
-        return ($quote ? $this->quote($element->getAttribute($attr)) : $element->getAttribute($attr));
+        $value = $element->getAttribute($attr);
+        if ($quote) {
+            $value = $this->quote($value);
+        }
+        return $value;
     }
 
     /**
@@ -79,7 +83,11 @@ abstract class Tag
      */
     protected function getAttr(DOMElement &$element, $attr, $default=null)
     {
-        return $this->quote($element->hasAttribute($attr) ? $element->getAttribute($attr) : $default);
+        if ($element->hasAttribute($attr)) {
+            return $this->quote($element->getAttribute($attr));
+        } else {
+            return $this->quote($default);
+        }
     }
 
     /**
@@ -92,7 +100,11 @@ abstract class Tag
      */
     protected function getUnquotedAttr(DOMElement &$element, $attr, $default=null)
     {
-        return ($element->hasAttribute($attr) ? $element->getAttribute($attr) : $default);
+        if ($element->hasAttribute($attr)) {
+            return $element->getAttribute($attr);
+        } else {
+            return $default;
+        }
     }
 
     /**
@@ -160,7 +172,7 @@ abstract class Tag
     {
         $char = strlen($val) ? $val[0] : '';
 
-        return (($char != '$') && ($char != '@'));
+        return $char != '$' && $char != '@';
     }
 }
 
