@@ -38,6 +38,13 @@ require_once(dirname(__FILE__).'/HTMLTag.php');
 class Compiler
 {
     /**
+     * The cache directory to use
+     *
+     * Defaults to sys_get_temp_dir().'/php_stl_cache'
+     */
+    public static $CacheDirectory;
+
+    /**
      * A simple constant to define that we are using phpsavant
      *
      * @var int
@@ -57,20 +64,6 @@ class Compiler
      * @var int
      */
     const TYPE_BUILTIN = 3;
-
-    /**
-     * The directory where compiled templates should be stored
-     */
-    public static $compileDir;
-
-    /**
-     * The default compiler class. This has to be set as a static
-     * item because there is no way in PHP to get the name of a static
-     * superclass
-     *
-     * @var string the class name used for compilation
-     */
-    private static $compilerClass = 'Compiler';
 
     /**
      * The DOM object
@@ -129,14 +122,19 @@ class Compiler
     private $handlerMap = array();
 
     /**
-     * Set the directory to put the compiled templates
+     * The directory where compiled templates should be stored
+     */
+    private $cacheDir = null;
+
+    /**
+     * Sets the compilation cache directory used by this compiler
      *
      * @param string $dir
      * @return void
      */
-    public static function setCompileDirectory($dir)
+    public function setCacheDirectory($dir)
     {
-        Compiler::$compileDir = preg_replace('|/$|', '', $dir);
+        $this->cacheDir = preg_replace('|/$|', '', $dir);
 
         if (! is_dir($dir)) {
             ob_start();
@@ -150,14 +148,28 @@ class Compiler
     }
 
     /**
-     * Sets the class of the compiler to use
+     * Returns the compilation cache directory used by this compiler
      *
-     * @param string $to class name
-     * @return void
+     * @return string
      */
-    public static function setCompilerClass($to)
+    public function getCacheDirectory()
     {
-        Compiler::$compilerClass = $to;
+        return $this->cacheDir;
+    }
+
+    /**
+     * Constructor
+     *
+     * @param string $file
+     * @return Compiler
+     */
+    public function __construct($type=Compiler::TYPE_PHPSAVANT)
+    {
+        $this->type = $type;
+
+        if (! isset($this->cacheDir)) {
+            $this->setCacheDirectory(self::$CacheDirectory);
+        }
     }
 
     /**
@@ -166,24 +178,22 @@ class Compiler
      * @param string $file the source file
      * @return string the location of the compiled file
      */
-    public static function compile($file, $type=Compiler::TYPE_PHPSAVANT)
+    public function compile($tmplFile)
     {
-        if (! file_exists($file)) {
-            throw new InvalidArgumentException("no such file $file");
+        if (! file_exists($tmplFile)) {
+            throw new InvalidArgumentException("no such file $tmplFile");
         }
 
-        $compiler = new Compiler::$compilerClass($file);
-        $compiler->type = $type;
-        $compFile = $compiler->getCompiledFile();
+        $compFile = $this->getCompiledFile($tmplFile);
 
         if (
             file_exists($compFile) &&
-            filemtime($compFile) >= filemtime($file)
+            filemtime($compFile) >= filemtime($tmplFile)
         ) {
             return $compFile;
         }
 
-        $compiler->parseFile();
+        $this->parseFile($tmplFile);
 
         ob_start();
         $fh = fopen($compFile, 'w');
@@ -193,21 +203,10 @@ class Compiler
         } else {
             ob_end_flush();
         }
-        fwrite($fh, $compiler->buffer);
+        fwrite($fh, $this->buffer);
         fclose($fh);
 
         return $compFile;
-    }
-
-    /**
-     * Constructor
-     *
-     * @param string $file
-     * @return Compiler
-     */
-    public function __construct($file='')
-    {
-        $this->file = $file;
     }
 
     /**
@@ -308,10 +307,10 @@ class Compiler
      *
      * @return string
      */
-    public function getCompiledFile()
+    public function getCompiledFile($tmplFile)
     {
-        $file = preg_replace('|[^a-z0-9_]|i', '_', $this->file);
-        return Compiler::$compileDir."/$file.php";
+        $file = preg_replace('|[^a-zA-Z0-9_]|', '_', $tmplFile);
+        return "$this->cacheDir/$file.php";
     }
 
     /**
@@ -383,17 +382,25 @@ class Compiler
      * @param string file path
      * @return string as from parse
      */
-    protected function parseFile()
+    protected function parseFile($file)
     {
-        ob_start();
-        $contents = file_get_contents($this->file);
-        if ($contents === false) {
-            $mess = ob_get_clean();
-            $this->cleanupParse();
-            throw new RuntimeException("Failed to read $this->file: $mess");
+        try {
+            $this->file = $file;
+            ob_start();
+            $contents = file_get_contents($this->file);
+            if ($contents === false) {
+                $mess = ob_get_clean();
+                $this->cleanupParse();
+                throw new RuntimeException("Failed to read $this->file: $mess");
+            }
+            ob_end_clean();
+            $ret = $this->parse($contents);
+            $this->file = null;
+            return $ret;
+        } catch (Exception $ex) {
+            $this->file = null;
+            throw $ex;
         }
-        ob_end_clean();
-        $this->parse($contents);
     }
 
     /**
@@ -422,7 +429,7 @@ class Compiler
         $this->buffer = preg_replace('/\s*\?>\s*?<\?php\s*/si', "\n", $this->buffer);
     }
 }
-Compiler::$compileDir = sys_get_temp_dir().'/php_stl_cache';
+Compiler::$CacheDirectory = sys_get_temp_dir().'/php_stl_cache';
 
 class CompilerException extends RuntimeException
 {

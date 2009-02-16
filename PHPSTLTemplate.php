@@ -61,11 +61,11 @@ class PHPSTLTemplate
     }
 
     /**
-     * The compiler class to use for compilation. Defaults to 'Compiler'
+     * The compiler object to use for compiling templates.
      *
-     * @var string
+     * @var Compiler
      */
-    private $compiler = 'Compiler';
+    private $compiler = null;
 
     /**
      * Holds a list of paths to search for templates
@@ -106,9 +106,35 @@ class PHPSTLTemplate
      * @param string $className the compiler class name
      * @return void
      */
-    public function setCompiler($className)
+    public function setCompiler(Compiler &$compiler)
     {
-        $this->compiler = $className;
+        $this->compiler = $compiler;
+    }
+
+    /**
+     * Returns the compiler object to use for compilation.
+     *
+     * If not set yet, will call setupCompiler to initialize the compiler
+     *
+     * @return Compiler
+     */
+    public function getCompiler()
+    {
+        if (! isset($this->compiler)) {
+            $this->compiler = $this->setupCompiler();
+        }
+        return $this->compiler;
+    }
+
+    /**
+     * Called by getCompiler to setup the compiler, the default implementation
+     * creates and returns a new instance of Compiler every time.
+     *
+     * @return Compiler
+     */
+    protected function setupCompiler()
+    {
+        return new Compiler();
     }
 
     /**
@@ -195,9 +221,8 @@ class PHPSTLTemplate
      */
     protected function fetchTemplate($template)
     {
-        $compiler = new $this->compiler();
-
-        $compiled = $compiler->compile($template, Compiler::TYPE_BUILTIN);
+        $compiler = $this->getCompiler();
+        $compiled = $compiler->compile($template);
 
         ob_start();
         include $compiled;
