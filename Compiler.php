@@ -108,6 +108,27 @@ class Compiler
     private $compiledFile;
 
     /**
+     * Returns the file being currently compiled if any
+     *
+     * @return string or null
+     */
+    public function currentFile()
+    {
+        return $this->file;
+    }
+
+    /**
+     * Returns the current parsing position in the template being complied if
+     * known
+     *
+     * @return string or null
+     */
+    public function currentFilePosition()
+    {
+        return null; // TODO
+    }
+
+    /**
      * Our map of classes which are being handled by xmlns's
      *
      * @var array
@@ -328,11 +349,15 @@ class Compiler
 
         if (! isset($this->handler[$class])) {
             if (! class_exists($class)) {
-                die("class $class of $uri does not exist, specified in $this->file");
+                throw new CompilerException($this,
+                    "No such Tag class $class for $uri"
+                );
             }
 
             if (! is_subclass_of($class, 'Tag')) {
-                die("$uri does not specify a class extending Tag");
+                throw new CompilerException($this,
+                    "$class is not a subclass of $Tag for $uri"
+                );
             }
 
             $this->handler[$class] = new $class($this);
@@ -396,5 +421,22 @@ class Compiler
     }
 }
 Compiler::$compileDir = sys_get_temp_dir().'/php_stl_cache';
+
+class CompilerException extends RuntimeException
+{
+    public function __construct($compiler, $mess)
+    {
+        $file = $compiler->currentFile();
+        if (isset($file)) {
+            $mess .= ", in $file";
+            $pos = $compiler->currentFilePosition();
+            if (isset($pos)) {
+                $mess .= " at $pos";
+            }
+        }
+
+        parent::__construct($mess);
+    }
+}
 
 ?>
