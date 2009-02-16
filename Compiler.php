@@ -382,6 +382,37 @@ class Compiler
     }
 
     /**
+     * Called by parse after the buffer is setup to write an preamble
+     *
+     * @return void
+     */
+    protected function writeTemplateHeader($subStats=null)
+    {
+        $stats = array();
+        if (isset($this->file)) {
+            $stats['File'] = $this->file;
+            $stats['Last Modified'] = strftime('%F %T %Z', filemtime($this->file));
+        }
+        $stats['Compile Time'] = strftime('%F %T %Z');
+
+        if (isset($subStats)) {
+            $stats = array_merge($stats, $subStats);
+        }
+
+        $len = max(array_map('strlen', array_keys($stats)));
+
+        $this->write("<?php\n/**\n");
+        foreach ($stats as $title => $value) {
+            $this->write(
+                " * $title".
+                str_repeat(' ', $len-strlen($title)).
+                " : $value\n"
+            );
+        }
+        $this->write(" */ ?>\n");
+    }
+
+    /**
      * Reads the given file, and parses its contents
      *
      * @param string file path
@@ -424,26 +455,7 @@ class Compiler
         }
         try {
             $this->buffer = '';
-
-            if (! isset($contents)) {
-                if (! isset($file)) {
-                    throw new InvalidArgumentException(
-                        "Either specify contents or file"
-                    );
-                }
-                $this->file = $file;
-
-                ob_start();
-                $contents = file_get_contents($file);
-                if ($contents === false) {
-                    $mess = ob_get_clean();
-                    $this->cleanupParse();
-                    throw new RuntimeException("Failed to read $file: $mess");
-                }
-                ob_end_clean();
-
-                $this->write("<?php // Compiled from $this->file ?>");
-            }
+            $this->writeTemplateHeader();
 
             $this->dom = new DOMDocument();
             $this->dom->preserveWhiteSpace = true;
