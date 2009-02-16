@@ -66,6 +66,11 @@ class Compiler
     const TYPE_BUILTIN = 3;
 
     /**
+     * If set false, will compile everytime and not check file mtime
+     */
+    protected $noCache = false;
+
+    /**
      * The DOM object
      *
      * @var DOMDocument
@@ -187,6 +192,7 @@ class Compiler
         $compFile = $this->getCompiledFile($tmplFile);
 
         if (
+            ! $this->noCache &&
             file_exists($compFile) &&
             filemtime($compFile) >= filemtime($tmplFile)
         ) {
