@@ -82,7 +82,7 @@ class Compiler
     /**
      * Sets the compiler type
      *
-     * @var TYPE_PHPSAVANT|TYPE_SMARTY
+     * @var TYPE_PHPSAVANT|TYPE_SMARTY|TYPE_BUILTIN
      */
     private $type;
 
@@ -98,7 +98,7 @@ class Compiler
      *
      * @var string
      */
-    private $file;
+    private $file=null;
 
     /**
      * The ouput php file
@@ -175,9 +175,7 @@ class Compiler
         } else {
             ob_end_flush();
         }
-
         fwrite($fh, $compiler->buffer);
-
         fclose($fh);
 
         return $compiler->getCompiledFile();
@@ -243,14 +241,15 @@ class Compiler
             return;
         }
 
-        if (($currentNode->nodeType == XML_TEXT_NODE) || ($currentNode->nodeType == XML_CDATA_SECTION_NODE)) {
+        if (
+            $currentNode->nodeType == XML_TEXT_NODE ||
+            $currentNode->nodeType == XML_CDATA_SECTION_NODE
+        ) {
             $this->write($currentNode->nodeValue);
             return;
         }
 
-        /*
-         * There's a handler for this node
-         */
+        // There's a handler for this node
         if ($currentNode->namespaceURI) {
             if ($handler = $this->getClass($currentNode->namespaceURI)) {
                 $method = preg_replace('|(\w+):(.+)|', '$2', $currentNode->nodeName);
@@ -267,21 +266,17 @@ class Compiler
 
         if ($currentNode->hasAttributes()) {
             foreach ($currentNode->attributes as $attr) {
-                $this->write(' ' . $attr->name . ' = "' . $attr->value . '"');
+                $this->write(' ' . $attr->name . '="' . $attr->value . '"');
             }
         }
 
-        /*
-         * make some exceptions for weirdo tags...
-         */
-        if ($currentNode->hasChildNodes() || (
-            ($currentNode->nodeName != 'meta')
-            && ($currentNode->nodeName != 'link')
-            && ($currentNode->nodeName != 'br')
-            && ($currentNode->nodeName != 'hr')
-            && ($currentNode->nodeName != 'img')
-            && ($currentNode->nodeName != 'input')))
-        {
+        // make some exceptions for weirdo tags...
+        if (
+            $currentNode->hasChildNodes() ||
+            in_array($currentNode->nodeName, array(
+                'meta', 'link', 'br', 'hr', 'img', 'input'
+            ))
+        ) {
             $this->write('>');
 
             foreach ($currentNode->childNodes as $child) {
@@ -289,8 +284,7 @@ class Compiler
             }
 
             $this->write("</$currentNode->nodeName>");
-        }
-        else {
+        } else {
             $this->write(' />');
         }
     }
@@ -327,25 +321,22 @@ class Compiler
     {
         $matches = array();
 
-        if (!preg_match('|^class[:]//(.+)|', $uri, $matches)) {
+        if (! preg_match('|^class://(.+)|', $uri, $matches)) {
             return null;
         }
-
         $class = $matches[1];
 
-        if (isset($this->handler[$class])) {
-            return $this->handler[$class];
-        }
+        if (! isset($this->handler[$class])) {
+            if (! class_exists($class)) {
+                die("class $class of $uri does not exist, specified in $this->file");
+            }
 
-        if (!class_exists($class)) {
-            die("class $class of $uri does not exist, specified in $this->file");
-        }
+            if (! is_subclass_of($class, 'Tag')) {
+                die("$uri does not specify a class extending Tag");
+            }
 
-        $this->handler[$class] = new $class($this);
-        if (!($this->handler[$class] instanceof Tag)) {
-            die("$uri does not specify a class extending Tag");
+            $this->handler[$class] = new $class($this);
         }
-
         return $this->handler[$class];
     }
 
@@ -400,9 +391,7 @@ class Compiler
             $this->process($node);
         }
 
-        /*
-         * normalize php blocks
-         */
+        // normalize php blocks
         $this->buffer = preg_replace('/\s*\?>\s*?<\?php\s*/si', "\n", $this->buffer);
     }
 }
