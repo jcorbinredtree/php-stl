@@ -57,7 +57,7 @@ class Compiler
     /**
      * The directory where compiled templates should be stored
      */
-    private static $compileDir = '/tmp';
+    public static $compileDir;
 
     /**
      * The default compiler class. This has to be set as a static
@@ -403,4 +403,6 @@ class Compiler
         $this->buffer = preg_replace('/\s*\?>\s*?<\?php\s*/si', "\n", $this->buffer);
     }
 }
+Compiler::$compileDir = sys_get_temp_dir().'/php_stl_cache';
+
 ?>
