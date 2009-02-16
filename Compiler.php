@@ -199,7 +199,7 @@ class Compiler
             return $compFile;
         }
 
-        $this->parseFile($tmplFile);
+        $parsed = $this->parseFile($tmplFile);
 
         ob_start();
         $fh = fopen($compFile, 'w');
@@ -209,7 +209,7 @@ class Compiler
         } else {
             ob_end_flush();
         }
-        fwrite($fh, $this->buffer);
+        fwrite($fh, $parsed);
         fclose($fh);
 
         return $compFile;
@@ -230,8 +230,7 @@ class Compiler
 
         $this->file = $resource_name;
 
-        $this->parse($source_content);
-        $compiled_content = $this->buffer;
+        $compiled_content = $this->parse($source_content);
 
         return true;
     }
@@ -412,27 +411,75 @@ class Compiler
     /**
      * Parses the given template content
      *
+     * Calls cleanupParse on failure or success
+     *
      * @param string $contents the source content
+     *
+     * @return string the compiled form
+     */
+    protected function parse($contents)
+    {
+        if (isset($this->buffer)) {
+            throw new RuntimeException('Compiler->parse called recursivley');
+        }
+        try {
+            $this->buffer = '';
+
+            if (! isset($contents)) {
+                if (! isset($file)) {
+                    throw new InvalidArgumentException(
+                        "Either specify contents or file"
+                    );
+                }
+                $this->file = $file;
+
+                ob_start();
+                $contents = file_get_contents($file);
+                if ($contents === false) {
+                    $mess = ob_get_clean();
+                    $this->cleanupParse();
+                    throw new RuntimeException("Failed to read $file: $mess");
+                }
+                ob_end_clean();
+
+                $this->write("<?php // Compiled from $this->file ?>");
+            }
+
+            $this->dom = new DOMDocument();
+            $this->dom->preserveWhiteSpace = true;
+
+            if (!$this->dom->loadXML($contents)) {
+                die("failed to parse $this->file");
+            }
+
+            $this->dom->normalizeDocument();
+
+            foreach ($this->dom->documentElement->childNodes as $node) {
+                $this->process($node);
+            }
+
+            // normalize php blocks
+            $this->buffer = preg_replace('/\s*\?>\s*?<\?php\s*/si', "\n", $this->buffer);
+
+            $ret = $this->buffer;
+            $this->cleanupParse();
+            return $ret;
+        } catch (Exception $ex) {
+            $this->cleanupParse();
+            throw $ex;
+        }
+    }
+
+    /**
+     * Destroys any state built up by a parse()
+     *
      * @return void
      */
-    private function parse($contents)
+    protected function cleanupParse()
     {
-        $this->buffer = '';
-        $this->dom = new DOMDocument();
-        $this->dom->preserveWhiteSpace = true;
-
-        if (!$this->dom->loadXML($contents)) {
-            die("failed to parse $this->file");
-        }
-
-        $this->dom->normalizeDocument();
-
-        foreach ($this->dom->documentElement->childNodes as $node) {
-            $this->process($node);
-        }
-
-        // normalize php blocks
-        $this->buffer = preg_replace('/\s*\?>\s*?<\?php\s*/si', "\n", $this->buffer);
+        $this->file = null;
+        $this->buffer = null;
+        $this->dom = null;
     }
 }
 Compiler::$CacheDirectory = sys_get_temp_dir().'/php_stl_cache';
