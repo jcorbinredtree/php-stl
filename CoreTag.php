@@ -26,6 +26,8 @@
  * @link         http://php-stl.redtreesystems.com
  */
 
+require_once(dirname(__FILE__).'/LoopTagStatus.php');
+
 /**
  * CoreTag
  *

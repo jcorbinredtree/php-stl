@@ -25,6 +25,10 @@
  * @link         http://php-stl.redtreesystems.com
  */
 
+require_once(dirname(__FILE__).'/Tag.php');
+require_once(dirname(__FILE__).'/CoreTag.php');
+require_once(dirname(__FILE__).'/HTMLTag.php');
+
 /**
  * Compiler
  *

@@ -25,6 +25,8 @@
  * @link         http://php-stl.redtreesystems.com
  */
 
+require_once(dirname(__FILE__).'/Compiler.php');
+
 // Borrowed from Pear File_Util module
 if (! defined('FILE_WIN32')) {
     define('FILE_WIN32', defined('OS_WINDOWS') ? OS_WINDOWS : !strncasecmp(PHP_OS, 'win', 3));
