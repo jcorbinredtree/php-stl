@@ -101,13 +101,6 @@ class Compiler
     private $file=null;
 
     /**
-     * The ouput php file
-     *
-     * @var string
-     */
-    private $compiledFile;
-
-    /**
      * Returns the file being currently compiled if any
      *
      * @return string or null
@@ -181,25 +174,26 @@ class Compiler
 
         $compiler = new Compiler::$compilerClass($file);
         $compiler->type = $type;
+        $compFile = $compiler->getCompiledFile();
 
-        if ($compiler->notModified()) {
-            return $compiler->getCompiledFile();
+        if ($compiler->notModified($compFile)) {
+            return $compFile;
         }
 
         $compiler->parse(file_get_contents($file));
 
         ob_start();
-        $fh = fopen($compiler->getCompiledFile(), 'w');
+        $fh = fopen($compFile, 'w');
         if (!$fh) {
             $mess = ob_get_clean();
-            throw new RuntimeException("Could not write $compiler->compiledFile: $mess");
+            throw new RuntimeException("Could not write $compFile: $mess");
         } else {
             ob_end_flush();
         }
         fwrite($fh, $compiler->buffer);
         fclose($fh);
 
-        return $compiler->getCompiledFile();
+        return $compFile;
     }
 
     /**
@@ -211,8 +205,6 @@ class Compiler
     public function __construct($file='')
     {
         $this->file = $file;
-        $file = preg_replace('|[^a-z0-9_]|i', '_', $file);
-        $this->compiledFile = Compiler::$compileDir . "/$file.php";
     }
 
     /**
@@ -241,13 +233,13 @@ class Compiler
      *
      * @return true if there is no need to re-compile
      */
-    public function notModified()
+    public function notModified($compFile)
     {
-        if (!file_exists($this->compiledFile)) {
+        if (!file_exists($compFile)) {
             return false;
         }
 
-        return filemtime($this->compiledFile) >= filemtime($this->file);
+        return filemtime($compFile) >= filemtime($this->file);
     }
 
     /**
@@ -329,7 +321,8 @@ class Compiler
      */
     public function getCompiledFile()
     {
-        return $this->compiledFile;
+        $file = preg_replace('|[^a-z0-9_]|i', '_', $this->file);
+        return Compiler::$compileDir."/$file.php";
     }
 
     /**
