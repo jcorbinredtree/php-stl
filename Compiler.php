@@ -183,7 +183,7 @@ class Compiler
             return $compFile;
         }
 
-        $compiler->parse(file_get_contents($file));
+        $compiler->parseFile();
 
         ob_start();
         $fh = fopen($compFile, 'w');
@@ -378,13 +378,33 @@ class Compiler
     }
 
     /**
-     * Parses the current file into the compiled output
+     * Reads the given file, and parses its contents
+     *
+     * @param string file path
+     * @return string as from parse
+     */
+    protected function parseFile()
+    {
+        ob_start();
+        $contents = file_get_contents($this->file);
+        if ($contents === false) {
+            $mess = ob_get_clean();
+            $this->cleanupParse();
+            throw new RuntimeException("Failed to read $this->file: $mess");
+        }
+        ob_end_clean();
+        $this->parse($contents);
+    }
+
+    /**
+     * Parses the given template content
      *
      * @param string $contents the source content
      * @return void
      */
     private function parse($contents)
     {
+        $this->buffer = '';
         $this->dom = new DOMDocument();
         $this->dom->preserveWhiteSpace = true;
 
