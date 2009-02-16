@@ -176,7 +176,10 @@ class Compiler
         $compiler->type = $type;
         $compFile = $compiler->getCompiledFile();
 
-        if ($compiler->notModified($compFile)) {
+        if (
+            file_exists($compFile) &&
+            filemtime($compFile) >= filemtime($file)
+        ) {
             return $compFile;
         }
 
@@ -226,20 +229,6 @@ class Compiler
         $compiled_content = $this->buffer;
 
         return true;
-    }
-
-    /**
-     * Determines if the compiled file has been modified since the source file
-     *
-     * @return true if there is no need to re-compile
-     */
-    public function notModified($compFile)
-    {
-        if (!file_exists($compFile)) {
-            return false;
-        }
-
-        return filemtime($compFile) >= filemtime($this->file);
     }
 
     /**
