@@ -123,6 +123,16 @@ class Compiler
     public static function setCompileDirectory($dir)
     {
         Compiler::$compileDir = preg_replace('|/$|', '', $dir);
+
+        if (! is_dir($dir)) {
+            ob_start();
+            if (! mkdir($dir, 0777, true)) {
+                $mess = ob_get_clean();
+                throw new RuntimeException("Could not mkdir $dir: $mess");
+            } else {
+                ob_end_flush();
+            }
+        }
     }
 
     /**
@@ -156,17 +166,6 @@ class Compiler
         }
 
         $compiler->parse(file_get_contents($file));
-
-        $compileDir = dirname($compiler->getCompiledFile());
-        if (! is_dir($compileDir)) {
-            ob_start();
-            if (! mkdir($compileDir, 0777, true)) {
-                $mess = ob_get_clean();
-                throw new RuntimeException("Could not mkdir $compileDir: $mess");
-            } else {
-                ob_end_flush();
-            }
-        }
 
         ob_start();
         $fh = fopen($compiler->getCompiledFile(), 'w');
