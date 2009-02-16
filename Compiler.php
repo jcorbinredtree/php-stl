@@ -118,7 +118,7 @@ class Compiler
      */
     public static function setCompileDirectory($dir)
     {
-        Compiler::$compileDir = $dir;
+        Compiler::$compileDir = preg_replace('|/$|', '', $dir);
     }
 
     /**
@@ -190,7 +190,7 @@ class Compiler
     {
         $this->file = $file;
         $file = preg_replace('|[^a-z0-9_]|i', '_', $file);
-        $this->compiledFile = Compiler::$compileDir . "$file.php";
+        $this->compiledFile = Compiler::$compileDir . "/$file.php";
     }
 
     /**
