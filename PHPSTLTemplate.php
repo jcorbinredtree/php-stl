@@ -237,25 +237,6 @@ class PHPSTLTemplate
     }
 
     /**
-     * Loads the template in the given file
-     *
-     * @param template string path to a template file, no checking is done on
-     * the argument, it's the caller's responsibility to make sure it exists, if
-     * not Compiler::compile will throw an exception
-     *
-     * @return string template content
-     */
-    protected function fetchTemplate($template)
-    {
-        $compiler = $this->getCompiler();
-        $compiled = $compiler->compile($template);
-
-        ob_start();
-        include $compiled;
-        return ob_get_clean();
-    }
-
-    /**
      * Renders the template
      *
      * @param ars array optional, if non-null, setArguments will be called
@@ -271,7 +252,12 @@ class PHPSTLTemplate
                 $oldArgs = $this->setArguments($args);
             }
 
-            $ret = $this->fetchTemplate($this->file);
+            $compiler = $this->getCompiler();
+            $compiled = $compiler->compile($this->file);
+
+            ob_start();
+            include $compiled;
+            $ret = ob_get_clean();
 
             if (isset($oldArgs)) {
                 $this->setArguments($oldArgs);
