@@ -67,6 +67,11 @@ class PHPSTLTemplate
     private $compiler = null;
 
     /**
+     * The compiled form, currently a path to a php file for include()ing.
+     */
+    private $compiled = null;
+
+    /**
      * Holds a list of paths to search for templates
      *
      * @var array
@@ -237,6 +242,20 @@ class PHPSTLTemplate
     }
 
     /**
+     * Compiles this template
+     *
+     * @see $compiled, Compiler::compile
+     */
+    public function compile()
+    {
+        if (isset($this->compiled)) {
+            return;
+        }
+        $compiler = $this->getCompiler();
+        $this->compiled = $compiler->compile($this->file);
+    }
+
+    /**
      * Renders the template
      *
      * @param ars array optional, if non-null, setArguments will be called
@@ -252,11 +271,12 @@ class PHPSTLTemplate
                 $oldArgs = $this->setArguments($args);
             }
 
-            $compiler = $this->getCompiler();
-            $compiled = $compiler->compile($this->file);
+            if (! isset($this->compiled)) {
+                $this->compile();
+            }
 
             ob_start();
-            include $compiled;
+            include $this->compiled;
             $ret = ob_get_clean();
 
             if (isset($oldArgs)) {
