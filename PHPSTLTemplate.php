@@ -170,6 +170,12 @@ class PHPSTLTemplate
             throw new InvalidArgumentException('name can not be empty');
         }
 
+        if (in_array($name, array('compiler', 'file', 'paths'))) {
+            throw new InvalidArgumentException(
+                "Won't squash proticted or private member '$name'"
+            );
+        }
+
         if (property_exists($this, $name)) {
             $old = $this->$name;
         } else {
