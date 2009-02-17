@@ -132,6 +132,17 @@ class Compiler
     private $cacheDir = null;
 
     /**
+     * Enables or disables caching
+     *
+     * @param b bool
+     * @betrun void
+     */
+    public function setCaching($b)
+    {
+        $this->noCache = $b ? false : true;
+    }
+
+    /**
      * Sets the compilation cache directory used by this compiler
      *
      * @param string $dir
