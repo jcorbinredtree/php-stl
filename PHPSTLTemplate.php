@@ -73,30 +73,40 @@ class PHPSTLTemplate
      */
     private $paths = array();
 
-    public $template;
+    private $file;
 
     /**
      * Constructor
      *
      * @param template string (optional) the template this instance is compiled from
      */
-    public function __construct($template=null)
+    public function __construct($file=null)
     {
-        if (isset($template)) {
-           if (! self::isFileAbsolute($template)) {
-                $foundTemplate = $this->pathLookup($template);
-                if (isset($foundTemplate)) {
-                    $template = $foundTemplate;
+        if (isset($file)) {
+           if (! self::isFileAbsolute($file)) {
+                $foundFile = $this->pathLookup($file);
+                if (isset($foundFile)) {
+                    $file = $foundFile;
                 } else {
                     throw new RuntimeException(
-                        "Unable to find template $template, ".
+                        "Unable to find template $file, ".
                         "search path contains: ".
                         implode(', ', $this->paths)
                     );
                 }
             }
-            $this->template = $template;
+            $this->file = $file;
         }
+    }
+
+    /**
+     * Gets the file that defines this template
+     *
+     * @return string path
+     */
+    public function getFile()
+    {
+        return $this->file;
     }
 
     /**
@@ -164,17 +174,17 @@ class PHPSTLTemplate
     }
 
     /**
-     * Looks up the given template in the path list
+     * Looks up the given file in the path list
      *
-     * @param string $template a path to a template
+     * @param string $file a path to a template
      * @return string
      */
-    public function pathLookup($template)
+    public function pathLookup($file)
     {
         foreach ($this->paths as &$path) {
-            $foundTemplate = "$path/$template";
-            if (file_exists($foundTemplate)) {
-                return $foundTemplate;
+            $foundFile = "$path/$file";
+            if (file_exists($foundFile)) {
+                return $foundFile;
             }
         }
 
@@ -245,16 +255,16 @@ class PHPSTLTemplate
     /**
      * Renders the template
      *
-     * Only works if the $template property is set
+     * Only works if the $file property is set
      *
      * @return string
      */
     public function render()
     {
-        if (! isset($this->template)) {
+        if (! isset($this->file)) {
             throw new RuntimeException('template property not set');
         }
-        return $this->fetchTemplate($this->template);
+        return $this->fetchTemplate($this->file);
     }
 }
 
