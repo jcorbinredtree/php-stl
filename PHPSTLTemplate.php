@@ -78,7 +78,10 @@ class PHPSTLTemplate
      */
     private $__paths = array();
 
-    private $__file;
+    /**
+     * The file that defines this template
+     */
+    private $__file = null;
 
     /**
      * Constructor
