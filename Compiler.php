@@ -473,6 +473,16 @@ class Compiler
             // normalize php blocks
             $this->buffer = preg_replace('/\s*\?>\s*?<\?php\s*/si', "\n", $this->buffer);
 
+            // Collapse whitespace around php directives
+            $this->buffer = preg_replace('/\s+<\?php/s', ' <?php', $this->buffer);
+            $this->buffer = preg_replace('/\?>\s+/s', '?> ', $this->buffer);
+
+            // Leading whitespace
+            $this->buffer = preg_replace('/^\s*(?:(<\?php.*?\?>)\s*)?/si', '$1', $this->buffer);
+
+            // Trailing whitespace
+            $this->buffer = preg_replace('/(?:\s*(<\?php.*?\?>))?\s*$/si', '$1', $this->buffer);
+
             $ret = $this->buffer;
             $this->cleanupParse();
             return $ret;
