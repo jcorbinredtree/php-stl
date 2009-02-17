@@ -162,7 +162,7 @@ class PHPSTLTemplate
      *
      * @param string $name the name to assign to
      * @param mixed $val the value to assign to $name
-     * @return void
+     * @return mixed the old value
      */
     public function assign($name, $val)
     {
@@ -170,7 +170,15 @@ class PHPSTLTemplate
             throw new InvalidArgumentException('name can not be empty');
         }
 
+        if (property_exists($this, $name)) {
+            $old = $this->$name;
+        } else {
+            $old = null;
+        }
+
         $this->$name = $val;
+
+        return $old;
     }
 
     /**
