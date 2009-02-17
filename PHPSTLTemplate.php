@@ -252,7 +252,7 @@ class PHPSTLTemplate
             return;
         }
         $compiler = $this->getCompiler();
-        $this->compiled = $compiler->compile($this->file);
+        $this->compiled = $compiler->compile($this);
     }
 
     /**

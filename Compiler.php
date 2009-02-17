@@ -180,11 +180,13 @@ class Compiler
     /**
      * The builtin && PHPSavant implementation
      *
-     * @param string $file the source file
+     * @param Template $file template to compile
      * @return string the location of the compiled file
      */
-    public function compile($tmplFile)
+    public function compile(PHPSTLTemplate &$template)
     {
+        $tmplFile = $template->getFile();
+
         if (! file_exists($tmplFile)) {
             throw new InvalidArgumentException("no such file $tmplFile");
         }
@@ -199,7 +201,14 @@ class Compiler
             return $compFile;
         }
 
-        $parsed = $this->parseFile($tmplFile);
+        try {
+            $this->template = $template;
+            $parsed = $this->parseFile($tmplFile);
+            $this->template = null;
+        } catch (Exception $ex) {
+            $this->template = null;
+            throw $ex;
+        }
 
         ob_start();
         $fh = fopen($compFile, 'w');
