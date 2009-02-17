@@ -64,21 +64,21 @@ class PHPSTLTemplate
      *
      * @var Compiler
      */
-    private $compiler = null;
+    private $__compiler = null;
 
     /**
      * The compiled form, currently a path to a php file for include()ing.
      */
-    private $compiled = null;
+    private $__compiled = null;
 
     /**
      * Holds a list of paths to search for templates
      *
      * @var array
      */
-    private $paths = array();
+    private $__paths = array();
 
-    private $file;
+    private $__file;
 
     /**
      * Constructor
@@ -95,11 +95,11 @@ class PHPSTLTemplate
                 throw new RuntimeException(
                     "Unable to find template $file, ".
                     "search path contains: ".
-                    implode(', ', $this->paths)
+                    implode(', ', $this->__paths)
                 );
             }
         }
-        $this->file = $file;
+        $this->__file = $file;
     }
 
     /**
@@ -109,7 +109,7 @@ class PHPSTLTemplate
      */
     public function getFile()
     {
-        return $this->file;
+        return $this->__file;
     }
 
     /**
@@ -120,7 +120,7 @@ class PHPSTLTemplate
      */
     public function setCompiler(Compiler &$compiler)
     {
-        $this->compiler = $compiler;
+        $this->__compiler = $compiler;
     }
 
     /**
@@ -132,10 +132,10 @@ class PHPSTLTemplate
      */
     public function getCompiler()
     {
-        if (! isset($this->compiler)) {
-            $this->compiler = $this->setupCompiler();
+        if (! isset($this->__compiler)) {
+            $this->__compiler = $this->setupCompiler();
         }
-        return $this->compiler;
+        return $this->__compiler;
     }
 
     /**
@@ -157,7 +157,7 @@ class PHPSTLTemplate
      */
     public function addPath($path)
     {
-        array_push($this->paths, $path);
+        array_push($this->__paths, $path);
     }
 
     /**
@@ -173,9 +173,9 @@ class PHPSTLTemplate
             throw new InvalidArgumentException('name can not be empty');
         }
 
-        if (in_array($name, array('compiler', 'file', 'paths'))) {
+        if (substr($name, 0, 2) == '__') {
             throw new InvalidArgumentException(
-                "Won't squash proticted or private member '$name'"
+                "Won't squash internal member '$name'"
             );
         }
 
@@ -231,7 +231,7 @@ class PHPSTLTemplate
      */
     public function pathLookup($file)
     {
-        foreach ($this->paths as &$path) {
+        foreach ($this->__paths as &$path) {
             $foundFile = "$path/$file";
             if (file_exists($foundFile)) {
                 return $foundFile;
@@ -248,11 +248,11 @@ class PHPSTLTemplate
      */
     public function compile()
     {
-        if (isset($this->compiled)) {
+        if (isset($this->__compiled)) {
             return;
         }
         $compiler = $this->getCompiler();
-        $this->compiled = $compiler->compile($this);
+        $this->__compiled = $compiler->compile($this);
     }
 
     /**
@@ -269,12 +269,12 @@ class PHPSTLTemplate
         try {
             $this->renderSetup($args);
 
-            if (! isset($this->compiled)) {
+            if (! isset($this->__compiled)) {
                 $this->compile();
             }
 
             ob_start();
-            include $this->compiled;
+            include $this->__compiled;
             $ret = ob_get_clean();
         } catch (Exception $ex) {
             $this->renderCleanup();
