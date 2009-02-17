@@ -264,12 +264,10 @@ class PHPSTLTemplate
      *
      * @return string
      */
-    public function render($args=null)
+    public final function render($args=null)
     {
         try {
-            if (isset($args)) {
-                $oldArgs = $this->setArguments($args);
-            }
+            $this->renderSetup($args);
 
             if (! isset($this->compiled)) {
                 $this->compile();
@@ -278,17 +276,45 @@ class PHPSTLTemplate
             ob_start();
             include $this->compiled;
             $ret = ob_get_clean();
-
-            if (isset($oldArgs)) {
-                $this->setArguments($oldArgs);
-            }
         } catch (Exception $ex) {
-            if (isset($oldArgs)) {
-                $this->setArguments($oldArgs);
-            }
+            $this->renderCleanup();
             throw $ex;
         }
+        $this->renderCleanup();
         return $ret;
+    }
+
+    private $__oldArgs = null;
+
+    /**
+     * Sets up any needed state to render the template
+     *
+     * Subclasses should override this and the following renderCleanup method
+     * rather than render.
+     *
+     * @param args array as in render
+     * @return void
+     * @see render, renderCleanup
+     */
+    protected function renderSetup($args)
+    {
+        if (isset($args)) {
+            $this->__oldArgs = $this->setArguments($args);
+        }
+    }
+
+    /**
+     * Essentially the inverse of renderSetup
+     *
+     * @return void
+     * @see render, renderSetup
+     */
+    protected function renderCleanup()
+    {
+        if (isset($this->__oldArgs)) {
+            $this->setArguments($this->__oldArgs);
+            $this->__oldArgs = null;
+        }
     }
 }
 
