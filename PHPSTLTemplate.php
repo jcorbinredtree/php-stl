@@ -57,7 +57,6 @@ class PHPSTLTemplate
             return preg_match('/^[a-zA-Z]:(\\\|\/)/', $path);
         }
         return ($path{0} == '/') || ($path{0} == '~');
-
     }
 
     /**
@@ -149,7 +148,7 @@ class PHPSTLTemplate
     }
 
     /**
-     * Assign $val to this.$name
+     * Assign $val to this->$name
      *
      * @param string $name the name to assign to
      * @param mixed $val the value to assign to $name
@@ -157,7 +156,7 @@ class PHPSTLTemplate
      */
     public function assign($name, $val)
     {
-        if (!$name) {
+        if (! $name) {
             throw new InvalidArgumentException('name can not be empty');
         }
 
