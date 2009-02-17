@@ -258,11 +258,31 @@ class PHPSTLTemplate
     /**
      * Renders the template
      *
+     * @param ars array optional, if non-null, setArguments will be called
+     * befor rendering with this paramater, then called again after rendering
+     * to restore.
+     *
      * @return string
      */
-    public function render()
+    public function render($args=null)
     {
-        return $this->fetchTemplate($this->file);
+        try {
+            if (isset($args)) {
+                $oldArgs = $this->setArguments($args);
+            }
+
+            $ret = $this->fetchTemplate($this->file);
+
+            if (isset($oldArgs)) {
+                $this->setArguments($oldArgs);
+            }
+        } catch (Exception $ex) {
+            if (isset($oldArgs)) {
+                $this->setArguments($oldArgs);
+            }
+            throw $ex;
+        }
+        return $ret;
     }
 }
 
