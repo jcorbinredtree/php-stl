@@ -284,20 +284,6 @@ class PHPSTLTemplate
     }
 
     /**
-     * Displays a template
-     *
-     * DEPRECATED
-     *   see the note on fetch
-     *
-     * @param string $template a path to a template
-     * @return void
-     */
-    public function display($template)
-    {
-        print $this->fetch($template);
-    }
-
-    /**
      * Renders the template
      *
      * @return string
