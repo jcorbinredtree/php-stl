@@ -176,7 +176,11 @@ class PHPSTLTemplate
             $old = null;
         }
 
-        $this->$name = $val;
+        if (isset($val)) {
+            $this->$name = $val;
+        } elseif (property_exists($this, $name)) {
+            unset($this->$name);
+        }
 
         return $old;
     }
