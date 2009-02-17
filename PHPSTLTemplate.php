@@ -237,34 +237,6 @@ class PHPSTLTemplate
     }
 
     /**
-     * Gets a template's output
-     *
-     * DEPRECATED
-     *   Instead of creating a generic template and telling it to fetch things,
-     *   you should just create a template from the file and render it
-     *
-     * @param string $template a path to a template
-     * @return string
-     */
-    public function fetch($template)
-    {
-        if (! self::isFileAbsolute($template)) {
-            $foundTemplate = $this->pathLookup($template);
-            if (isset($foundTemplate)) {
-                $template = $foundTemplate;
-            } else {
-                throw new RuntimeException(
-                    "Unable to find template $template, ".
-                    "search path contains: ".
-                    implode(', ', $this->paths)
-                );
-            }
-        }
-
-        return $this->fetchTemplate($template);
-    }
-
-    /**
      * Loads the template in the given file
      *
      * @param template string path to a template file, no checking is done on
