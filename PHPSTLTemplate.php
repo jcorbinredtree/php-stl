@@ -80,23 +80,21 @@ class PHPSTLTemplate
      *
      * @param template string (optional) the template this instance is compiled from
      */
-    public function __construct($file=null)
+    public function __construct($file)
     {
-        if (isset($file)) {
-           if (! self::isFileAbsolute($file)) {
-                $foundFile = $this->pathLookup($file);
-                if (isset($foundFile)) {
-                    $file = $foundFile;
-                } else {
-                    throw new RuntimeException(
-                        "Unable to find template $file, ".
-                        "search path contains: ".
-                        implode(', ', $this->paths)
-                    );
-                }
+       if (! self::isFileAbsolute($file)) {
+            $foundFile = $this->pathLookup($file);
+            if (isset($foundFile)) {
+                $file = $foundFile;
+            } else {
+                throw new RuntimeException(
+                    "Unable to find template $file, ".
+                    "search path contains: ".
+                    implode(', ', $this->paths)
+                );
             }
-            $this->file = $file;
         }
+        $this->file = $file;
     }
 
     /**
@@ -302,15 +300,10 @@ class PHPSTLTemplate
     /**
      * Renders the template
      *
-     * Only works if the $file property is set
-     *
      * @return string
      */
     public function render()
     {
-        if (! isset($this->file)) {
-            throw new RuntimeException('template property not set');
-        }
         return $this->fetchTemplate($this->file);
     }
 }
