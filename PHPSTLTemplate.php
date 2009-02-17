@@ -192,6 +192,35 @@ class PHPSTLTemplate
     }
 
     /**
+     * Assigns multipe template arguments
+     *
+     * Returns a named array of old values such that calling setArguments again
+     * with it will undo the prior call.
+     *
+     * If setting any one of the arguments raises an exception, the entire
+     * change set is undone and the exception propogated.
+     *
+     * @param args array
+     * @return array
+     * @see assign
+     */
+    public function setArguments($args)
+    {
+        $old = array();
+        try {
+            foreach ($args as $name => &$value) {
+                $old[$name] = $this->assign($name, $value);
+            }
+        } catch (Exception $ex) {
+            try {
+                $this->setArguments($old);
+            } catch (Exception $swallow) {}
+            throw $ex;
+        }
+        return $old;
+    }
+
+    /**
      * Looks up the given file in the path list
      *
      * @param string $file a path to a template
