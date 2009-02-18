@@ -160,6 +160,10 @@ abstract class Tag
      */
     protected function quote($val)
     {
+        if (! isset($val)) {
+            return null;
+        }
+
         if ($this->needsQuote($val)) {
             return "'$val'";
         }
