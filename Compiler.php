@@ -277,9 +277,9 @@ class Compiler
 
         // There's a handler for this node
         if ($currentNode->namespaceURI) {
-            if ($handler = $this->getClass($currentNode->namespaceURI)) {
-                $method = preg_replace('|(\w+):(.+)|', '$2', $currentNode->nodeName);
-                if (!method_exists($handler, $method)) {
+            if ($handler = $this->getHandler($currentNode->namespaceURI)) {
+                $method = substr(strstr($currentNode->nodeName, ':'), 1);
+                if (! method_exists($handler, $method)) {
                     $method = "_$method";
                 }
 
@@ -344,7 +344,7 @@ class Compiler
      * @param string $uri the specified xmlns uri
      * @return Tag an instance of Tag to be used to process this tag
      */
-    private function getClass($uri)
+    private function getHandler($uri)
     {
         $matches = array();
 
@@ -362,7 +362,7 @@ class Compiler
 
             if (! is_subclass_of($class, 'Tag')) {
                 throw new CompilerException($this,
-                    "$class is not a subclass of $Tag for $uri"
+                    "$class is not a subclass of Tag for $uri"
                 );
             }
 
@@ -528,7 +528,7 @@ Compiler::$CacheDirectory = sys_get_temp_dir().'/php_stl_cache';
 
 class CompilerException extends RuntimeException
 {
-    public function __construct($compiler, $mess)
+    public function __construct(Compiler $compiler, $mess)
     {
         $file = $compiler->currentFile();
         if (isset($file)) {
