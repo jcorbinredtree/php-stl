@@ -75,7 +75,7 @@ class Compiler
      *
      * @var DOMDocument
      */
-    private $dom;
+    protected $dom;
 
     /**
      * Sets the compiler type
