@@ -470,8 +470,6 @@ class Compiler
         }
         try {
             $this->buffer = '';
-            $this->writeTemplateHeader();
-
             $this->dom = new DOMDocument();
             $this->dom->preserveWhiteSpace = true;
 
@@ -480,6 +478,8 @@ class Compiler
             }
 
             $this->dom->normalizeDocument();
+
+            $this->writeTemplateHeader();
 
             foreach ($this->dom->documentElement->childNodes as $node) {
                 $this->process($node);
