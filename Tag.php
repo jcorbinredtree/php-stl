@@ -53,6 +53,48 @@ abstract class Tag
     }
 
     /**
+     * Dispatches a DOMElement to be handled by this Tag subclass instance
+     *
+     * Given an element named <ns:method />, this will look for a method
+     * "method" first, then "_method", if neither is found, if method begins
+     * with '__' or if the method is one defined direectly by the Tag class, a
+     * CompilerException is thrown.
+     *
+     * The return value of the handler method is passed through, this is
+     * typically void and doesn't matter.
+     *
+     * @param element DOMElement the element to handle
+     * @return mixed usually void
+     * @see Compiler::process
+     */
+    public function __dispatch(DOMElement &$element)
+    {
+        $method = substr(strstr($element->nodeName, ':'), 1);
+
+        if (! method_exists($this, $method)) {
+            if (! method_exists($this, "_$method")) {
+                throw new CompilerException($this->compiler,
+                    'Tag class '.get_class($this).
+                    ' unable to handle element '.$element->nodeName
+                );
+            }
+            $method = "_$method";
+        }
+
+        if (
+            substr($method, 0, 2) == '__' ||
+            in_array($method, get_class_methods('Tag'))
+        ) {
+            throw new CompilerException($this->compiler,
+                "Won't call internal ".get_class($this).
+                " method for element ".$element->nodeNode
+            );
+        }
+
+        return $this->$method($element);
+    }
+
+    /**
      * Requires the attribute to be on $element
      *
      * @param DOMElement $element the target element

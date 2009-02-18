@@ -278,12 +278,7 @@ class Compiler
         // There's a handler for this node
         if ($currentNode->namespaceURI) {
             if ($handler = $this->getHandler($currentNode->namespaceURI)) {
-                $method = substr(strstr($currentNode->nodeName, ':'), 1);
-                if (! method_exists($handler, $method)) {
-                    $method = "_$method";
-                }
-
-                $handler->$method($currentNode);
+                $handler->__dispatch($currentNode);
                 return;
             }
         }
