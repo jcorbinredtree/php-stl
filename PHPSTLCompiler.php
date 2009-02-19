@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Compiler class definition
+ * PHPSTLCompiler class definition
  *
  * PHP version 5
  *
@@ -30,12 +30,12 @@ require_once(dirname(__FILE__).'/CoreTag.php');
 require_once(dirname(__FILE__).'/HTMLTag.php');
 
 /**
- * Compiler
+ * PHPSTLCompiler
  *
  * This class provides the xml => php translation, modeled after the JSTL. An implementation
  * for PHPSavant and Smarty is included.
  */
-class Compiler
+class PHPSTLCompiler
 {
     /**
      * The cache directory to use
@@ -177,9 +177,9 @@ class Compiler
      * Constructor
      *
      * @param string $file
-     * @return Compiler
+     * @return PHPSTLCompiler
      */
-    public function __construct($type=Compiler::TYPE_PHPSAVANT)
+    public function __construct($type=PHPSTLCompiler::TYPE_PHPSAVANT)
     {
         $this->type = $type;
 
@@ -246,7 +246,7 @@ class Compiler
      */
     public function _compile_file($resource_name, $source_content, &$compiled_content)
     {
-        $this->type = Compiler::TYPE_SMARTY;
+        $this->type = PHPSTLCompiler::TYPE_SMARTY;
 
         $this->file = $resource_name;
 
@@ -350,13 +350,13 @@ class Compiler
 
         if (! isset($this->handler[$class])) {
             if (! class_exists($class)) {
-                throw new CompilerException($this,
+                throw new PHPSTLCompilerException($this,
                     "No such Tag class $class for $uri"
                 );
             }
 
             if (! is_subclass_of($class, 'Tag')) {
-                throw new CompilerException($this,
+                throw new PHPSTLCompilerException($this,
                     "$class is not a subclass of Tag for $uri"
                 );
             }
@@ -388,7 +388,7 @@ class Compiler
         $output = preg_replace("/[$][{]([^=]+?)[}]/e", "'\$'.preg_replace('/(?<![.])[.](?![.])/','->','\\1')", $output);
         $output = preg_replace("/[@][{]([^=]+?)[}]/", '$1', $output);
 
-        if ($this->type == Compiler::TYPE_SMARTY) {
+        if ($this->type == PHPSTLCompiler::TYPE_SMARTY) {
             $output = preg_replace('/[$]this[-][>](\w+)/i', '$this->_tpl_vars[\'\\1\']', $output);
             $output = preg_replace('/[$]this[-][>]_tpl_vars[[]'."'(.+?)'[]][(]/i", '$this->$1(', $output);
         }
@@ -466,7 +466,7 @@ class Compiler
     protected function parse($contents)
     {
         if (isset($this->buffer)) {
-            throw new RuntimeException('Compiler->parse called recursivley');
+            throw new RuntimeException('PHPSTLCompiler->parse called recursivley');
         }
         try {
             $this->buffer = '';
@@ -519,11 +519,11 @@ class Compiler
         $this->dom = null;
     }
 }
-Compiler::$CacheDirectory = sys_get_temp_dir().'/php_stl_cache';
+PHPSTLCompiler::$CacheDirectory = sys_get_temp_dir().'/php_stl_cache';
 
-class CompilerException extends RuntimeException
+class PHPSTLCompilerException extends RuntimeException
 {
-    public function __construct(Compiler $compiler, $mess)
+    public function __construct(PHPSTLCompiler $compiler, $mess)
     {
         $file = $compiler->currentFile();
         if (isset($file)) {

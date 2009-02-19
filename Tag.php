@@ -38,16 +38,16 @@ abstract class Tag
     /**
      * The compiler to write to
      *
-     * @var Compiler
+     * @var PHPSTLCompiler
      */
     protected $compiler;
 
     /**
      * Constructor
      *
-     * @param Compiler $compiler
+     * @param PHPSTLCompiler $compiler
      */
-    public function __construct(Compiler &$compiler)
+    public function __construct(PHPSTLCompiler &$compiler)
     {
         $this->compiler = $compiler;
     }
@@ -58,14 +58,14 @@ abstract class Tag
      * Given an element named <ns:method />, this will look for a method
      * "method" first, then "_method", if neither is found, if method begins
      * with '__' or if the method is one defined direectly by the Tag class, a
-     * CompilerException is thrown.
+     * PHPSTLCompilerException is thrown.
      *
      * The return value of the handler method is passed through, this is
      * typically void and doesn't matter.
      *
      * @param element DOMElement the element to handle
      * @return mixed usually void
-     * @see Compiler::process
+     * @see PHPSTLCompiler::process
      */
     public function __dispatch(DOMElement &$element)
     {
@@ -73,7 +73,7 @@ abstract class Tag
 
         if (! method_exists($this, $method)) {
             if (! method_exists($this, "_$method")) {
-                throw new CompilerException($this->compiler,
+                throw new PHPSTLCompilerException($this->compiler,
                     'Tag class '.get_class($this).
                     ' unable to handle element '.$element->nodeName
                 );
@@ -85,7 +85,7 @@ abstract class Tag
             substr($method, 0, 2) == '__' ||
             in_array($method, get_class_methods('Tag'))
         ) {
-            throw new CompilerException($this->compiler,
+            throw new PHPSTLCompilerException($this->compiler,
                 "Won't call internal ".get_class($this).
                 " method for element ".$element->nodeNode
             );

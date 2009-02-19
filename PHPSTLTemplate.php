@@ -25,7 +25,7 @@
  * @link         http://php-stl.redtreesystems.com
  */
 
-require_once(dirname(__FILE__).'/Compiler.php');
+require_once(dirname(__FILE__).'/PHPSTLCompiler.php');
 
 // Borrowed from Pear File_Util module
 if (! defined('FILE_WIN32')) {
@@ -62,7 +62,7 @@ class PHPSTLTemplate
     /**
      * The compiler object to use for compiling templates.
      *
-     * @var Compiler
+     * @var PHPSTLCompiler
      */
     private $__compiler = null;
 
@@ -121,7 +121,7 @@ class PHPSTLTemplate
      * @param string $className the compiler class name
      * @return void
      */
-    public function setCompiler(Compiler &$compiler)
+    public function setCompiler(PHPSTLCompiler &$compiler)
     {
         $this->__compiler = $compiler;
     }
@@ -129,9 +129,9 @@ class PHPSTLTemplate
     /**
      * Returns the compiler object to use for compilation.
      *
-     * If not set yet, will call setupCompiler to initialize the compiler
+     * If not set yet, will call setupPHPSTLCompiler to initialize the compiler
      *
-     * @return Compiler
+     * @return PHPSTLCompiler
      */
     public function getCompiler()
     {
@@ -143,13 +143,13 @@ class PHPSTLTemplate
 
     /**
      * Called by getCompiler to setup the compiler, the default implementation
-     * creates and returns a new instance of Compiler every time.
+     * creates and returns a new instance of PHPSTLCompiler every time.
      *
-     * @return Compiler
+     * @return PHPSTLCompiler
      */
     protected function setupCompiler()
     {
-        return new Compiler();
+        return new PHPSTLCompiler();
     }
 
     /**
@@ -247,7 +247,7 @@ class PHPSTLTemplate
     /**
      * Compiles this template
      *
-     * @see $compiled, Compiler::compile
+     * @see $compiled, PHPSTLCompiler::compile
      */
     public function compile()
     {
