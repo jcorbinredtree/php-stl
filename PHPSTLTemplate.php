@@ -64,24 +64,24 @@ class PHPSTLTemplate
      *
      * @var PHPSTLCompiler
      */
-    private $__compiler = null;
+    private $compiler = null;
 
     /**
      * The compiled form, currently a path to a php file for include()ing.
      */
-    private $__compiled = null;
+    private $compiled = null;
 
     /**
      * Holds a list of paths to search for templates
      *
      * @var array
      */
-    private $__paths = array();
+    private $paths = array();
 
     /**
      * The file that defines this template
      */
-    private $__file = null;
+    private $file = null;
 
     /**
      * Constructor
@@ -98,11 +98,11 @@ class PHPSTLTemplate
                 throw new RuntimeException(
                     "Unable to find template $file, ".
                     "search path contains: ".
-                    implode(', ', $this->__paths)
+                    implode(', ', $this->paths)
                 );
             }
         }
-        $this->__file = $file;
+        $this->file = $file;
     }
 
     /**
@@ -112,7 +112,7 @@ class PHPSTLTemplate
      */
     public function getFile()
     {
-        return $this->__file;
+        return $this->file;
     }
 
     /**
@@ -123,7 +123,7 @@ class PHPSTLTemplate
      */
     public function setCompiler(PHPSTLCompiler &$compiler)
     {
-        $this->__compiler = $compiler;
+        $this->compiler = $compiler;
     }
 
     /**
@@ -135,10 +135,10 @@ class PHPSTLTemplate
      */
     public function getCompiler()
     {
-        if (! isset($this->__compiler)) {
-            $this->__compiler = $this->setupCompiler();
+        if (! isset($this->compiler)) {
+            $this->compiler = $this->setupCompiler();
         }
-        return $this->__compiler;
+        return $this->compiler;
     }
 
     /**
@@ -160,7 +160,7 @@ class PHPSTLTemplate
      */
     public function addPath($path)
     {
-        array_push($this->__paths, $path);
+        array_push($this->paths, $path);
     }
 
     /**
@@ -243,7 +243,7 @@ class PHPSTLTemplate
      */
     public function pathLookup($file)
     {
-        foreach ($this->__paths as &$path) {
+        foreach ($this->paths as &$path) {
             $foundFile = "$path/$file";
             if (file_exists($foundFile)) {
                 return $foundFile;
@@ -260,11 +260,11 @@ class PHPSTLTemplate
      */
     public function compile()
     {
-        if (isset($this->__compiled)) {
+        if (isset($this->compiled)) {
             return;
         }
         $compiler = $this->getCompiler();
-        $this->__compiled = $compiler->compile($this);
+        $this->compiled = $compiler->compile($this);
     }
 
     /**
@@ -296,7 +296,7 @@ class PHPSTLTemplate
         return $ret;
     }
 
-    private $__oldArgs = null;
+    private $oldArgs = null;
 
     /**
      * Sets up any needed state to render the template
@@ -311,7 +311,7 @@ class PHPSTLTemplate
     protected function renderSetup($args)
     {
         if (isset($args)) {
-            $this->__oldArgs = $this->setArguments($args);
+            $this->oldArgs = $this->setArguments($args);
         }
     }
 
@@ -323,9 +323,9 @@ class PHPSTLTemplate
      */
     protected function renderCleanup()
     {
-        if (isset($this->__oldArgs)) {
-            $this->setArguments($this->__oldArgs);
-            $this->__oldArgs = null;
+        if (isset($this->oldArgs)) {
+            $this->setArguments($this->oldArgs);
+            $this->oldArgs = null;
         }
     }
 }
