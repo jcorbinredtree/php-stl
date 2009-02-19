@@ -221,6 +221,12 @@ class PHPSTLTemplate
      */
     public function setArguments($args)
     {
+        if (! is_array($args)) {
+            throw new InvalidArgumentException('not an array');
+        }
+        if (! count($args)) {
+            return array();
+        }
         $old = array();
         try {
             foreach ($args as $name => &$value) {
