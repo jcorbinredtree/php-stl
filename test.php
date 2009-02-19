@@ -1,12 +1,20 @@
 #!/usr/bin/php
 <?php
 
-require "PHPSTLTemplate.php";
+require "PHPSTL.php";
 
-PHPSTLCompiler::$CacheDirectory = dirname(__FILE__).'/template-test-cache';
-$t = new PHPSTLTemplate(dirname(__FILE__).'/test.xml');
-$t->getPHPSTLCompiler()->setCaching(false);
+$pstl = new PHPSTL(array(
+  'include_path' => array('.'),
+  'compile_caching' => false,
+  'diskcache_directory' => 'template-test-cache',
+  'diskcache_hashed' => false
+));
 
+
+// $t->getPHPSTLCompiler()->setCaching(false);
+// TODO test abs
+
+$t = $pstl->load('test.xml');
 print $t->render();
 
 ?>
