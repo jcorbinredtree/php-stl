@@ -260,17 +260,18 @@ class PHPSTLTemplate
     }
 
     /**
-     * Compiles this template
+     * Gets the compiled form of this template
      *
-     * @see $compiled, PHPSTLCompiler::compile
+     * @see $__compiled, PHPSTLCompiler::compile
+     * @return string
      */
-    public function compile()
+    public function getCompiled()
     {
-        if (isset($this->compiled)) {
-            return;
+        if (! isset($this->compiled)) {
+            $compiler = $this->getCompiler();
+            $this->compiled = $compiler->compile($this);
         }
-        $compiler = $this->getCompiler();
-        $this->compiled = $compiler->compile($this);
+        return $this->compiled;
     }
 
     /**
@@ -287,12 +288,9 @@ class PHPSTLTemplate
         try {
             $this->renderSetup($args);
 
-            if (! isset($this->__compiled)) {
-                $this->compile();
-            }
-
+            $compiled = $this->getCompiled();
             ob_start();
-            include $this->__compiled;
+            include $compiled;
             $ret = ob_get_clean();
         } catch (Exception $ex) {
             $this->renderCleanup();
