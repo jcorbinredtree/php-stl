@@ -33,10 +33,7 @@ if (! defined('FILE_WIN32')) {
 }
 
 /**
- * PHPSTLTemplate
- *
- * This class is a simple template, used for those who don't want the PHPSavant or Smarty
- * dependency
+ * Represents a template
  */
 class PHPSTLTemplate
 {

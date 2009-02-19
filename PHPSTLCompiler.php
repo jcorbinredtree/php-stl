@@ -32,8 +32,7 @@ require_once(dirname(__FILE__).'/HTMLTag.php');
 /**
  * PHPSTLCompiler
  *
- * This class provides the xml => php translation, modeled after the JSTL. An implementation
- * for PHPSavant and Smarty is included.
+ * This class provides the xml => php translation, modeled after the JSTL.
  */
 class PHPSTLCompiler
 {
@@ -43,27 +42,6 @@ class PHPSTLCompiler
      * Defaults to sys_get_temp_dir().'/php_stl_cache'
      */
     public static $CacheDirectory;
-
-    /**
-     * A simple constant to define that we are using phpsavant
-     *
-     * @var int
-     */
-    const TYPE_PHPSAVANT = 1;
-
-    /**
-     * A simple constant to define that we are using smarty
-     *
-     * @var int
-     */
-    const TYPE_SMARTY = 2;
-
-    /**
-     * Use the builtin type
-     *
-     * @var int
-     */
-    const TYPE_BUILTIN = 3;
 
     /**
      * If set false, will compile everytime and not check file mtime
@@ -76,13 +54,6 @@ class PHPSTLCompiler
      * @var DOMDocument
      */
     protected $dom;
-
-    /**
-     * Sets the compiler type
-     *
-     * @var TYPE_PHPSAVANT|TYPE_SMARTY|TYPE_BUILTIN
-     */
-    private $type;
 
     /**
      * The buffer to write to
@@ -179,17 +150,15 @@ class PHPSTLCompiler
      * @param string $file
      * @return PHPSTLCompiler
      */
-    public function __construct($type=PHPSTLCompiler::TYPE_PHPSAVANT)
+    public function __construct()
     {
-        $this->type = $type;
-
         if (! isset($this->cacheDir)) {
             $this->setCacheDirectory(self::$CacheDirectory);
         }
     }
 
     /**
-     * The builtin && PHPSavant implementation
+     * Compiles a template
      *
      * @param Template $file template to compile
      * @return string the location of the compiled file
@@ -233,26 +202,6 @@ class PHPSTLCompiler
         fclose($fh);
 
         return $compFile;
-    }
-
-    /**
-     * The Smarty implementation
-     *
-     * sets $compiled_content to the compiled source
-     * @param string $resource_name
-     * @param string $source_content
-     * @param string $compiled_content
-     * @return true on success
-     */
-    public function _compile_file($resource_name, $source_content, &$compiled_content)
-    {
-        $this->type = PHPSTLCompiler::TYPE_SMARTY;
-
-        $this->file = $resource_name;
-
-        $compiled_content = $this->parse($source_content);
-
-        return true;
     }
 
     /**
@@ -387,11 +336,6 @@ class PHPSTLCompiler
          */
         $output = preg_replace("/[$][{]([^=]+?)[}]/e", "'\$'.preg_replace('/(?<![.])[.](?![.])/','->','\\1')", $output);
         $output = preg_replace("/[@][{]([^=]+?)[}]/", '$1', $output);
-
-        if ($this->type == PHPSTLCompiler::TYPE_SMARTY) {
-            $output = preg_replace('/[$]this[-][>](\w+)/i', '$this->_tpl_vars[\'\\1\']', $output);
-            $output = preg_replace('/[$]this[-][>]_tpl_vars[[]'."'(.+?)'[]][(]/i", '$this->$1(', $output);
-        }
 
         return $output;
     }
