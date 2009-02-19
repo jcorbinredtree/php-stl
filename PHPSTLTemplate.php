@@ -164,7 +164,8 @@ class PHPSTLTemplate
     }
 
     /**
-     * Assign $val to this->$name
+     * Template arguments are simply object properties on the PHPSTLTemplate
+     * object itself
      *
      * @param string $name the name to assign to
      * @param mixed $val the value to assign to $name
@@ -176,10 +177,18 @@ class PHPSTLTemplate
             throw new InvalidArgumentException('name can not be empty');
         }
 
-        if (substr($name, 0, 2) == '__') {
-            throw new InvalidArgumentException(
-                "Won't squash internal member '$name'"
-            );
+        $cls = new ReflectionClass(get_class($this));
+        try {
+            $prop = $cls->getProperty($name);
+        } catch (ReflectionException $e) {
+            $prop = null;
+        }
+        if (isset($prop)) {
+            if (! $prop->isPublic()) {
+                throw new InvalidArgumentException(
+                    "attempt to assign to non-public property $name"
+                );
+            }
         }
 
         if (property_exists($this, $name)) {
