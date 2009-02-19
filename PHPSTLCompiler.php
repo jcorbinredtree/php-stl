@@ -37,19 +37,20 @@ require_once(dirname(__FILE__).'/HTMLTag.php');
 class PHPSTLCompiler
 {
     /**
-     * The cache directory to use
-     *
-     * Defaults to sys_get_temp_dir().'/php_stl_cache'
+     * @var PHPSTL
      */
-    public static $CacheDirectory;
+    protected $pstl;
 
     /**
-     * If set false, will compile everytime and not check file mtime
+     * Returns the PHP-STL instance that this compiler is a part of
      */
-    protected $noCache = false;
+    public function getPHPSTL()
+    {
+        return $this->pstl;
+    }
 
     /**
-     * The DOM object
+     * The DOM object of the template currently being parsed
      *
      * @var DOMDocument
      */
@@ -63,32 +64,11 @@ class PHPSTLCompiler
     private $buffer;
 
     /**
-     * The source file
+     * The current template
      *
      * @var string
      */
-    private $file=null;
-
-    /**
-     * Returns the file being currently compiled if any
-     *
-     * @return string or null
-     */
-    public function currentFile()
-    {
-        return $this->file;
-    }
-
-    /**
-     * Returns the current parsing position in the template being complied if
-     * known
-     *
-     * @return string or null
-     */
-    public function currentFilePosition()
-    {
-        return null; // TODO
-    }
+    private $template=null;
 
     /**
      * Our map of classes which are being handled by xmlns's
@@ -98,110 +78,60 @@ class PHPSTLCompiler
     private $handlerMap = array();
 
     /**
-     * The directory where compiled templates should be stored
-     */
-    private $cacheDir = null;
-
-    /**
-     * Enables or disables caching
-     *
-     * @param b bool
-     * @betrun void
-     */
-    public function setCaching($b)
-    {
-        $this->noCache = $b ? false : true;
-    }
-
-    /**
-     * Sets the compilation cache directory used by this compiler
-     *
-     * @param string $dir
-     * @return void
-     */
-    public function setCacheDirectory($dir)
-    {
-        $this->cacheDir = preg_replace('|/$|', '', $dir);
-
-        if (! is_dir($dir)) {
-            ob_start();
-            if (! mkdir($dir, 0777, true)) {
-                $mess = ob_get_clean();
-                throw new RuntimeException("Could not mkdir $dir: $mess");
-            } else {
-                ob_end_flush();
-            }
-        }
-    }
-
-    /**
-     * Returns the compilation cache directory used by this compiler
-     *
-     * @return string
-     */
-    public function getCacheDirectory()
-    {
-        return $this->cacheDir;
-    }
-
-    /**
      * Constructor
      *
-     * @param string $file
-     * @return PHPSTLCompiler
+     * @param pstl PHPSTL
      */
-    public function __construct()
+    public function __construct(PHPSTL $pstl)
     {
-        if (! isset($this->cacheDir)) {
-            $this->setCacheDirectory(self::$CacheDirectory);
-        }
+        $this->pstl = $pstl;
+    }
+
+    /**
+     * Returns the template currently being compiled
+     *
+     * @return string or null
+     */
+    public function currentTemplate()
+    {
+        return $this->template;
+    }
+
+    /**
+     * Returns the current parsing position in the template being complied if
+     * known
+     *
+     * @return string or null
+     */
+    public function currentPosition()
+    {
+        return null; // TODO
     }
 
     /**
      * Compiles a template
      *
-     * @param Template $file template to compile
-     * @return string the location of the compiled file
+     * @param template PHPSTLTemplate template to compile
+     * @return string the location of the cache file
      */
     public function compile(PHPSTLTemplate &$template)
     {
-        $tmplFile = $template->getFile();
-
-        if (! file_exists($tmplFile)) {
-            throw new InvalidArgumentException("no such file $tmplFile");
-        }
-
-        $compFile = $this->getCompiledFile($tmplFile);
-
-        if (
-            ! $this->noCache &&
-            file_exists($compFile) &&
-            filemtime($compFile) >= filemtime($tmplFile)
-        ) {
-            return $compFile;
-        }
-
+        $cache = $this->pstl->getCache();
         try {
             $this->template = $template;
-            $parsed = $this->parseFile($tmplFile);
+            if ($cache->isCached($template)) {
+                $ret = $cache->fetch($template);
+            } else {
+                $content = $this->template->getContent();
+                $content = $this->parse($content);
+                $ret = $cache->store($template, $content);
+            }
             $this->template = null;
+            return $ret;
         } catch (Exception $ex) {
             $this->template = null;
             throw $ex;
         }
-
-        ob_start();
-        $fh = fopen($compFile, 'w');
-        if (!$fh) {
-            $mess = ob_get_clean();
-            throw new RuntimeException("Could not write $compFile: $mess");
-        } else {
-            ob_end_flush();
-        }
-        fwrite($fh, $parsed);
-        fclose($fh);
-
-        return $compFile;
     }
 
     /**
@@ -272,17 +202,6 @@ class PHPSTLCompiler
     }
 
     /**
-     * Returns the path of the compiled file
-     *
-     * @return string
-     */
-    public function getCompiledFile($tmplFile)
-    {
-        $file = preg_replace('|[^a-zA-Z0-9_]|', '_', $tmplFile);
-        return "$this->cacheDir/$file.php";
-    }
-
-    /**
      * Gets the class that will be used to handle $uri
      *
      * @param string $uri the specified xmlns uri
@@ -348,10 +267,10 @@ class PHPSTLCompiler
     protected function writeTemplateHeader($subStats=null)
     {
         $stats = array();
-        if (isset($this->file)) {
-            $stats['File'] = $this->file;
-            $stats['Last Modified'] = strftime('%F %T %Z', filemtime($this->file));
-        }
+        $stats['Template'] = (string) $this->template;
+        $stats['Last Modified'] = strftime('%F %T %Z',
+            $this->template->getLastModified()
+        );
         $stats['Compile Time'] = strftime('%F %T %Z');
 
         if (isset($subStats)) {
@@ -369,33 +288,6 @@ class PHPSTLCompiler
             );
         }
         $this->write(" */ ?>\n");
-    }
-
-    /**
-     * Reads the given file, and parses its contents
-     *
-     * @param string file path
-     * @return string as from parse
-     */
-    protected function parseFile($file)
-    {
-        try {
-            $this->file = $file;
-            ob_start();
-            $contents = file_get_contents($this->file);
-            if ($contents === false) {
-                $mess = ob_get_clean();
-                $this->cleanupParse();
-                throw new RuntimeException("Failed to read $this->file: $mess");
-            }
-            ob_end_clean();
-            $ret = $this->parse($contents);
-            $this->file = null;
-            return $ret;
-        } catch (Exception $ex) {
-            $this->file = null;
-            throw $ex;
-        }
     }
 
     /**
@@ -418,7 +310,7 @@ class PHPSTLCompiler
             $this->dom->preserveWhiteSpace = true;
 
             if (!$this->dom->loadXML($contents)) {
-                die("failed to parse $this->file");
+                die("failed to parse $this->template");
             }
 
             $this->dom->normalizeDocument();
@@ -458,24 +350,20 @@ class PHPSTLCompiler
      */
     protected function cleanupParse()
     {
-        $this->file = null;
         $this->buffer = null;
         $this->dom = null;
     }
 }
-PHPSTLCompiler::$CacheDirectory = sys_get_temp_dir().'/php_stl_cache';
 
 class PHPSTLCompilerException extends RuntimeException
 {
     public function __construct(PHPSTLCompiler $compiler, $mess)
     {
-        $file = $compiler->currentFile();
-        if (isset($file)) {
-            $mess .= ", in $file";
-            $pos = $compiler->currentFilePosition();
-            if (isset($pos)) {
-                $mess .= " at $pos";
-            }
+        $template = $compiler->currentTemplate();
+        $mess .= ", in $template";
+        $pos = $compiler->currentPosition();
+        if (isset($pos)) {
+            $mess .= " at $pos";
         }
 
         parent::__construct($mess);

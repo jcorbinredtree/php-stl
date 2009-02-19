@@ -25,43 +25,24 @@
  * @link         http://php-stl.redtreesystems.com
  */
 
-require_once(dirname(__FILE__).'/PHPSTLCompiler.php');
-
-// Borrowed from Pear File_Util module
-if (! defined('FILE_WIN32')) {
-    define('FILE_WIN32', defined('OS_WINDOWS') ? OS_WINDOWS : !strncasecmp(PHP_OS, 'win', 3));
-}
-
 /**
  * Represents a template
  */
 class PHPSTLTemplate
 {
-    // Borrowed from Pear File_Util::isAbsolute
     /**
-     * Tests if a path is absolute
-     *
-     * @param $path string the path
-     *
-     * @return boolean
+     * The PHPSTLTemplateProvider that created this template
      */
-    protected static function isFileAbsolute($path)
-    {
-        if (preg_match('/(?:\/|\\\)\.\.(?=\/|$)/', $path)) {
-            return false;
-        }
-        if (FILE_WIN32) {
-            return preg_match('/^[a-zA-Z]:(\\\|\/)/', $path);
-        }
-        return ($path{0} == '/') || ($path{0} == '~');
-    }
+    private $provider;
 
     /**
-     * The compiler object to use for compiling templates.
+     * The resource string represented by this template
      *
-     * @var PHPSTLCompiler
+     * Resource strings only have meaning with respect to a
+     * PHPSTLTemplateProvider, providers create PHPSTLTemplates from resource
+     * strings.
      */
-    private $compiler = null;
+    private $resource;
 
     /**
      * The compiled form, currently a path to a php file for include()ing.
@@ -69,98 +50,62 @@ class PHPSTLTemplate
     private $compiled = null;
 
     /**
-     * Holds a list of paths to search for templates
-     *
-     * @var array
-     */
-    private $paths = array();
-
-    /**
-     * The file that defines this template
-     */
-    private $file = null;
-
-    /**
      * Constructor
      *
-     * @param template string (optional) the template this instance is compiled from
+     * @param resource string the resource that this template was created from
      */
-    public function __construct($file)
+    public function __construct(PHPSTLTemplateProvider $provider, $resource)
     {
-       if (! self::isFileAbsolute($file)) {
-            $foundFile = $this->pathLookup($file);
-            if (isset($foundFile)) {
-                $file = $foundFile;
-            } else {
-                throw new RuntimeException(
-                    "Unable to find template $file, ".
-                    "search path contains: ".
-                    implode(', ', $this->paths)
-                );
-            }
-        }
-        $this->file = $file;
+        $this->provider = $provider;
+        $this->resource = $resource;
     }
 
     /**
-     * Gets the file that defines this template
-     *
-     * @return string path
+     * @see $resource
+     * @return string
      */
-    public function getFile()
+    public function getResource()
     {
-        return $this->file;
+        return $this->resource;
     }
 
     /**
-     * Sets the compiler class
-     *
-     * @param string $className the compiler class name
-     * @return void
+     * @see $provider
+     * @return PHPSTLTemplateProvider
      */
-    public function setCompiler(PHPSTLCompiler &$compiler)
+    public function getProvider()
     {
-        $this->compiler = $compiler;
+        return $this->provider;
     }
 
     /**
-     * Returns the compiler object to use for compilation.
+     * Returns a unix timestamp indicating when the template resource was last
+     * modified.
      *
-     * If not set yet, will call setupPHPSTLCompiler to initialize the compiler
+     * Equivalent to:
+     *   $template->getProvider()->getLastModified($template)
      *
-     * @return PHPSTLCompiler
+     * @return int timestamp
      */
-    public function getCompiler()
+    public function getLastModified()
     {
-        if (! isset($this->compiler)) {
-            $this->compiler = $this->setupCompiler();
-        }
-        return $this->compiler;
+        return $this->provider->getLastModified($this);
     }
 
     /**
-     * Called by getCompiler to setup the compiler, the default implementation
-     * creates and returns a new instance of PHPSTLCompiler every time.
+     * Returns raw template content
      *
-     * @return PHPSTLCompiler
+     * Equivalent to:
+     *   $template->getProvider()->getContent($template)
      */
-    protected function setupCompiler()
+    public function getContent()
     {
-        return new PHPSTLCompiler();
+        return $this->provider->getContent($this);
     }
 
     /**
-     * Add path $path to the list of paths to search for templates
+     * Assigns asingle template argument
      *
-     * @param string $path the path you wish to add
-     * @return void
-     */
-    public function addPath($path)
-    {
-        array_push($this->paths, $path);
-    }
-
-    /**
      * Template arguments are simply object properties on the PHPSTLTemplate
      * object itself
      *
@@ -239,36 +184,31 @@ class PHPSTLTemplate
     }
 
     /**
-     * Looks up the given file in the path list
-     *
-     * @param string $file a path to a template
-     * @return string
-     */
-    public function pathLookup($file)
-    {
-        foreach ($this->paths as &$path) {
-            $foundFile = "$path/$file";
-            if (file_exists($foundFile)) {
-                return $foundFile;
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Gets the compiled form of this template
      *
-     * @see $__compiled, PHPSTLCompiler::compile
+     * @see $compiled, PHPSTLCompiler::compile
      * @return string
      */
     public function getCompiled()
     {
         if (! isset($this->compiled)) {
-            $compiler = $this->getCompiler();
-            $this->compiled = $compiler->compile($this);
+            $pstl = $this->provider->getPHPSTL();
+            $this->compiled = $pstl->getCompiler()->compile($this);
         }
         return $this->compiled;
+    }
+
+    /**
+     * Convenience method
+     *   Equivalent to:
+     *     $template->getProvider()->getPHPSTL()->getCache()->cacheName($template)
+     *
+     * @return string the cacheName for this template
+     * @see PHPSTLTemplateCache::cacheName
+     */
+    public function cacheName()
+    {
+        return $this->provider->getPHPSTL()->getCache()->cacheName($this);
     }
 
     /**
@@ -329,6 +269,35 @@ class PHPSTLTemplate
             $this->oldArgs = null;
         }
     }
+
+    /**
+     * Returns string representation of this template like:
+     *   "{provider}/{resource}"
+     * where "{provider}" and "{resource}" are the provider string
+     * representation and the resource string respectively
+     *
+     * Example:
+     *   $pstl = new PHPSTL(array(
+     *     'include_path' => '/some/template/dir'
+     *   ));
+     *   print (string) $pstl->load('task/template.xml');
+     *   // prints "file:///some/template/dir/task/template.xml"
+     *
+     * @return string
+     */
+    public function __tostring()
+    {
+        return ((string) $this->provider).'/'.$this->resource;
+    }
+
+    /**
+     * Data needed by the template provider, this property shouldn't be accessed
+     * by anything other than the provider, doing so can result in undefined
+     * results.
+     *
+     * @var mixed
+     */
+    public $providerData;
 }
 
 ?>
