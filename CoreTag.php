@@ -285,16 +285,6 @@ class CoreTag extends Tag
     }
 
     /**
-     * Prints the xhtml tag
-     */
-    public function xhtml(DOMElement &$element)
-    {
-        $this->compiler->write('<html xmlns = "http://www.w3.org/1999/xhtml">');
-        $this->process($element);
-        $this->compiler->write('</html>');
-    }
-
-    /**
      * Puts out a doctype
      *
      * @param string type required - the only supported value is 'xhtml 1.1'
