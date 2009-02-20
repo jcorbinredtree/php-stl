@@ -46,6 +46,60 @@ class CoreTag extends Tag
     }
 
     /**
+     * Predefined doctypes
+     */
+    public static $Doctypes = array(
+        'xhtml 1.0' => 'xhtml 1.0 trans',
+        'xhtml 1.0 trans' => array(
+            'root'   => 'html',
+            'access' => 'PUBLIC',
+            'id'     => '-//W3C//DTD XHTML 1.0 Transitional//EN',
+            'url'    => 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd'
+        ),
+        'xhtml 1.0 strict' => array(
+            'root'   => 'html',
+            'access' => 'PUBLIC',
+            'id'     => '-//W3C//DTD XHTML 1.0 Strict//EN',
+            'url'    => 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'
+        ),
+        'xhtml 1.1' => array(
+            'root'   => 'html',
+            'access' => 'PUBLIC',
+            'id'     => '-//W3C//DTD XHTML 1.1//EN',
+            'url'    => 'http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd'
+        )
+    );
+    /**
+     * Static function call setup by CoreTag::doctype
+     */
+    static public function BuildDoctype($id, $root=null, $access=null, $url=null)
+    {
+        if (!isset($id)) return null;
+
+        if (array_key_exists($id, self::$Doctypes)) {
+            $sanity = 0;
+            while (is_string(self::$Doctypes[$id])) {
+                if (++$sanity > 100) {
+                    throw new RuntimeException(
+                        '<core:doctype /> pathological alias'
+                    );
+                }
+                $id = self::$Doctypes[$id];
+            }
+            $doctype = self::$Doctypes[$id];
+            assert(is_array($doctype));
+            $root   = $doctype['root'];
+            $access = $doctype['access'];
+            $id     = $doctype['id'];
+            $url    = $doctype['url'];
+        }
+        if (isset($url)) {
+            $url = " \"$url\"";
+        }
+        return "<!DOCTYPE $root $access \"$id\"$url>\n";
+    }
+
+    /**
      * Opens a try { ... } catch { ... } block
      */
     public function _try(DOMElement &$element)
@@ -332,6 +386,38 @@ class CoreTag extends Tag
                 $this->getAttr($element, 'version'),
                 $this->getAttr($element, 'encoding')
             ))."); ?>"
+        );
+    }
+
+    /**
+     * Outputs a <!DOCTYPE ...>
+     *
+     * @param string id required - the doctype id
+     * @param string root optional
+     * @param string access optional
+     * @param string url optional
+     *
+     * See CoreTag::$Doctypes for shortcut ids
+     * @see CoreTag::BuildDoctype, CoreTag::$Doctypes
+     */
+    public function doctype(DOMElement &$element)
+    {
+        if ($element->hasAttribute('type')) {
+            // Old style
+            $id     = $this->getAttr($element, 'type');
+            $root   = null;
+            $access = null;
+            $url    = null;
+        } else {
+            $id     = $this->requiredAttr($element, 'id');
+            $root   = $this->getAttr($element, 'root');
+            $access = $this->getAttr($element, 'access');
+            $url    = $this->getAttr($element, 'url');
+        }
+        $this->compiler->write(
+            "<?php echo CoreTag::BuildDoctype(".
+            $this->argList(array($id, $root, $access, $url)).
+            "); ?>"
         );
     }
 
