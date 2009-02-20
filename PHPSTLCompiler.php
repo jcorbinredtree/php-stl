@@ -119,7 +119,10 @@ class PHPSTLCompiler
         $cache = $this->pstl->getCache();
         try {
             $this->template = $template;
-            if ($cache->isCached($template)) {
+            if (
+                $cache->isCached($template) &&
+                ! $this->pstl->getOption('always_compile', false)
+            ) {
                 $ret = $cache->fetch($template);
             } else {
                 $content = $this->template->getContent();
