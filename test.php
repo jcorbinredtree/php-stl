@@ -7,7 +7,8 @@ $pstl = new PHPSTL(array(
   'include_path' => array('.'),
   'compile_caching' => false,
   'diskcache_directory' => 'template-test-cache',
-  'diskcache_hashed' => false
+  'diskcache_hashed' => false,
+  'always_compile' => true
 ));
 
 
