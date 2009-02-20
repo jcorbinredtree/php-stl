@@ -30,6 +30,7 @@ require_once(dirname(__FILE__).'/PHPSTLTemplateCache.php');
 require_once(dirname(__FILE__).'/PHPSTLDiskCache.php');
 require_once(dirname(__FILE__).'/PHPSTLCompiler.php');
 require_once(dirname(__FILE__).'/PHPSTLTemplateProvider.php');
+require_once(dirname(__FILE__).'/PHPSTLFileBackedProvider.php');
 require_once(dirname(__FILE__).'/PHPSTLDirectoryProvider.php');
 
 /**
