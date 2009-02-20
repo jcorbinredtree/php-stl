@@ -58,6 +58,17 @@ class CoreTag extends Tag
     }
 
     /**
+     * Represents an elseif condition, only works after a <core:if>
+     */
+    public function _elseif(DOMElement &$element)
+    {
+        $test = $this->requiredAttr($element, 'test', false);
+        $this->compiler->write("<?php elseif ($test) { ?>");
+        $this->process($element);
+        $this->compiler->write('<?php } ?>');
+    }
+
+    /**
      * Represents an else condition - obviously only useful after a <core:if>
      */
     public function _else(DOMElement &$element)
