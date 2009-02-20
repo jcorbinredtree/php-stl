@@ -214,6 +214,46 @@ abstract class Tag
     }
 
     /**
+     * Formats an array of elements as a comma-separated argument list suitable
+     * for building a function call string.
+     *
+     * Example:
+     *   $this->argList(array("'a'", null, "'b'", null))
+     *   == "'a', null, 'b'"
+     *
+     *   $this->argList(array("'a'", null, "'b'", null), false)
+     *   == "'a', null, 'b', null"
+     *
+     * Note, this function does NOT quote any arguments, since it is presumed
+     * the most likely use case is something like:
+     *   $this->argList(array(
+     *     $this->getAttr(...),
+     *     ...
+     *   );
+     * Where most arguments come from attribute parsing methods which already
+     * quote things.
+     *
+     * @param args array the array list
+     * @param pruneTail boolean default true, if true drops trailing nulls
+     * from the arg list
+     * @return string
+     */
+    protected function argList($args, $pruneTail=true)
+    {
+        if ($pruneTail) {
+            while (! isset($args[count($args)-1])) {
+                array_pop($args);
+            }
+        }
+        $a = array();
+        foreach ($args as &$arg) {
+            array_push($a, isset($arg) ? $arg : 'null');
+
+        }
+        return implode(', ', $a);
+    }
+
+    /**
      * Returns true if the value requires quoting
      *
      * @return boolean
