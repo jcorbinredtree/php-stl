@@ -239,21 +239,23 @@ class CoreTag extends Tag
         $escapeXml = $this->getBooleanAttr($element, 'escapeXml', true);
         $default = $this->getAttr($element, 'default', '');
         $var = $this->getUnquotedAttr($element, 'var', false);
-        $format = $this->getUnquotedAttr($element, 'format', false);
+        $format = $this->getUnquotedAttr($element, 'format');
 
         if (! $value) {
             $value = $default;
         }
 
-        if (substr($format, 0, 5) == 'date:') {
-            $fstr = substr($format, 5);
-            $value = "date('$fstr',$value)";
-        } elseif ($format == 'int') {
-            $value = "(int) $value";
-        } elseif ($format == 'money') {
-            $value = "money_format('%n', $value)";
-        } elseif ($format == 'boolean') {
-            $value = "($value?'Yes':'No')";
+        if (isset($format)) {
+            if (substr($format, 0, 5) == 'date:') {
+                $fstr = substr($format, 5);
+                $value = "date('$fstr',$value)";
+            } elseif ($format == 'int') {
+                $value = "(int) $value";
+            } elseif ($format == 'money') {
+                $value = "money_format('%n', $value)";
+            } elseif ($format == 'boolean') {
+                $value = "($value?'Yes':'No')";
+            }
         }
 
         if ($escapeXml) {
