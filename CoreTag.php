@@ -247,9 +247,8 @@ class CoreTag extends Tag
             $value = $default;
         }
 
-        $matches = array();
-        if (preg_match('/^date:(.+)/', $format, $matches)) {
-            $fstr = $matches[1];
+        if (substr($format, 0, 5) == 'date:') {
+            $fstr = substr($format, 5);
             $value = "date('$fstr',$value)";
         } elseif ($format == 'int') {
             $value = "(int) $value";
