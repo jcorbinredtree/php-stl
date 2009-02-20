@@ -254,6 +254,58 @@ abstract class Tag
     }
 
     /**
+     * Collects attributes from an element and return them
+     *
+     * @param element DOMElement the element
+     * @param attrs array array of attribute names to process; can
+     * also contain named key => value pairs specifying default values in
+     * case the element lacks an attribute; ordinal elements are equivalent to
+     * specifying name => null
+     * @param asArray boolean optional, default false, if true return an
+     * associative array of collected values, otherwise returns a string
+     * like ' attr="val" attr="val"'
+     * @return string or array
+     */
+    protected function getAttributes(DOMElement &$element, $attrs, $asArray=false)
+    {
+        assert(is_array($attrs));
+
+        $opts = array();
+        foreach ($attrs as $attr => $default) {
+            if (is_int($attr)) {
+                $attr = $default;
+                $default = null;
+            }
+            $value = $this->getUnquotedAttr($element, $attr, $default);
+            if (isset($value)) {
+                $opts[$attr] = $value;
+            }
+        }
+        if ($asArray) {
+            return $opts;
+        } else {
+            return $this->getAttributeString($opts);
+        }
+    }
+
+    /**
+     * Returns a tag attribute string like ' name="val" name="val"' from an
+     * associative array.
+     *
+     * @param attrs array
+     * @return string
+     */
+    protected function getAttributeString($attrs)
+    {
+        assert(is_array($attrs));
+        $r = '';
+        foreach ($attrs as $attr => $value) {
+            $r .= " $attr=\"$value\"";
+        }
+        return $r;
+    }
+
+    /**
      * Returns true if the value requires quoting
      *
      * @return boolean
