@@ -250,7 +250,7 @@ class PHPSTLTemplate
             include $compiled;
             $ret = ob_get_clean();
         } catch (Exception $ex) {
-            ob_end_clean();
+            @ob_end_clean();
             $this->renderCleanup();
             throw $ex;
         }
