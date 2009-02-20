@@ -37,21 +37,6 @@ class PHPSTLLoopIterator
     public $current = null;
     public $index = 0;
 
-    public function getCount()
-    {
-        return $this->count;
-    }
-
-    public function getCurrent()
-    {
-        return $this->current;
-    }
-
-    public function getIndex()
-    {
-        return $this->index;
-    }
-
     public function isFirst()
     {
         return !$this->count;
@@ -65,6 +50,30 @@ class PHPSTLLoopIterator
     public function isAltRow()
     {
         return ($this->index % 2);
+    }
+
+    /**
+     * DEPRECATED, just use the public property
+     */
+    public function getCount()
+    {
+        return $this->count;
+    }
+
+    /**
+     * DEPRECATED, just use the public property
+     */
+    public function getCurrent()
+    {
+        return $this->current;
+    }
+
+    /**
+     * DEPRECATED, just use the public property
+     */
+    public function getIndex()
+    {
+        return $this->index;
     }
 }
 
