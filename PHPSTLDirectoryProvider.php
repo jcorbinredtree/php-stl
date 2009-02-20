@@ -28,7 +28,7 @@
 /**
  * Implements a basic filesystem-based template provider
  */
-class PHPSTLDirectoryProvider extends PHPSTLTemplateProvider
+class PHPSTLDirectoryProvider extends PHPSTLFileBackedProvider
 {
     /**
      * The path exposed by this provider
@@ -53,56 +53,20 @@ class PHPSTLDirectoryProvider extends PHPSTLTemplateProvider
     }
 
     /**
-     * Loads a template resource
+     * Subclasses implement this to do basic file based resolution
      *
      * @param resource string
-     * @return mixed PHPSTLTemplate, PHPSTLTemplateProvider::DECLINE, or
-     * PHPSTLTemplateProvider::FAIL
-     * @see PHPSTL::load
+     * @return string the file path
+     * @see PHPSTLFileBackedProvider::getResourceFile
      */
-    public function load($resource)
+    protected function getResourceFile($resource)
     {
         $path = realpath("$this->path/$resource");
-        if ($path !== false && is_file($path)) {
-            return $this->createTemplate($resource, $path);
+        if ($path == false || ! is_file($path)) {
+            return null;
+        } else {
+            return $path;
         }
-        return PHPSTLTemplateProvider::DECLINE;
-    }
-
-    /**
-     * Returns a unix timestamp indicating when the template resource was last
-     * modified.
-     *
-     * @param template PHPSTLTemplate
-     * @return int timestamp
-     */
-    public function getLastModified(PHPSTLTemplate $template)
-    {
-        assert(is_a($template->getProvider(), 'PHPSTLDirectoryProvider'));
-        $file = $template->providerData;
-        assert(file_exists($file));
-        return filemtime($file);
-    }
-
-    /**
-     * Gets raw template content
-     *
-     * @param template PHPSTLTemplate
-     * @return string
-     */
-    public function getContent(PHPSTLTemplate $template)
-    {
-        assert(is_a($template->getProvider(), 'PHPSTLDirectoryProvider'));
-        $file = $template->providerData;
-        assert(file_exists($file));
-        ob_start();
-        $content = file_get_contents($file);
-        if ($content === false) {
-            $mess = ob_get_clean();
-            throw new RuntimeException("Failed to read $file: $mess");
-        }
-        ob_end_flush();
-        return $content;
     }
 
     /**
