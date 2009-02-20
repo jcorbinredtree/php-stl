@@ -1,0 +1,94 @@
+<template
+  xmlns:core="class://CoreTag">
+
+<core:xmlHeader version="0.9" encoding="iso-8859" />
+
+<ul>
+  <core:forEach list="@{explode(',', 'a,b,c,d')}" var="i">
+    <li>${=i}
+    <core:if test="${i} == 'a'">
+      if
+    <core:elseif test="${i} == 'c'" />
+      elsif
+    <core:else />
+      else
+    </core:if>
+    </li>
+  </core:forEach>
+</ul>
+
+<ul>
+  <core:forEach list="@{explode(',', 'a,b,c,d,e,f')}" var="i">
+    <li>${=i}
+      <core:switch test="${i}">
+        <core:case when="a" fallThrough="true" />
+        <core:case when="b">
+          case ab
+        </core:case>
+        <core:case when="d" fallThrough="true" />
+        <core:case when="f">
+          case df
+        </core:case>
+        <core:default>
+          default
+        </core:default>
+      </core:switch>
+    </li>
+  </core:forEach>
+</ul>
+
+<core:php><![CDATA[
+  $dumpTest = array(
+    'deep' => array(
+      'a' => 'alpha',
+      'b' => 'bravo',
+      'c' => 'charlie'
+      ),
+    'another' => 'one'
+  );
+]]></core:php>
+
+<p>Dump: <core:dump var="${dumpTest}" /></p>
+<p>JSON: <core:json object="${dumpTest}" /></p>
+
+<textarea><core:cdata><![CDATA[
+  <some>
+    code & other crap
+  </some>
+]]></core:cdata></textarea>
+
+<ul>
+  <core:for from="3" to="8" var="i">
+    <core:if test="${i} == 6">
+      <core:break />
+    <core:elseif test="${i} == 4" />
+      <core:continue />
+    </core:if>
+    <li>${=i}</li>
+  </core:for>
+</ul>
+
+<p>An hour ago:
+  <core:set var="testVal" value="@{time()-3600}" />
+  <core:out value="${testVal}" format="date:%c" />
+</p>
+
+<p>Int:
+  <core:set var="testVal" value="@{3.14}" />
+  <core:out value="${testVal}" format="int" />
+</p>
+
+<p>Money:
+  <core:set var="testVal" value="@{.1}" />
+  <core:out value="${testVal}" format="money" />
+</p>
+
+<p>Bool:
+  <core:set var="testVal" value="@{true}" />
+  <core:out value="${testVal}" format="boolean" />
+  /
+  <core:set var="testVal" value="@{false}" />
+  <core:out value="${testVal}" format="boolean" />
+</p>
+
+</template>

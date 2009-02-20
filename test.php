@@ -15,7 +15,12 @@ $pstl = new PHPSTL(array(
 // $t->getPHPSTLCompiler()->setCaching(false);
 // TODO test abs
 
-$t = $pstl->load('test.xml');
-print $t->render();
+$coretest = $pstl->load('coretest.xml');
+print "CoreTag Test:\n";
+$out = $coretest->render();
+$a = explode("\n", $out);
+for ($i=0; $i<count($a); ++$i) {
+  printf("%01d: %s\n", $i, $a[$i]);
+}
 
 ?>

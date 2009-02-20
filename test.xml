@@ -1,8 +1,0 @@
-<template
-  xmlns:c="class://CoreTag"
-  xmlns:h="class://HTMLTag">
-
-hello world
-<div><c:dump var="${this}" /></div>
-
-</template>
