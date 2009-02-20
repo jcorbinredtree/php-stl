@@ -335,12 +335,19 @@ class CoreTag extends Tag
 
     /**
      * Writes a CDATA block to the output
+     *
+     * @param simple boolean default false, if true don't process the
+     * <core:cdata /> children, simpley output its textContent
      */
     public function cdata(DOMElement &$element)
     {
-        $this->compiler->write('<![CDATA[');
-        $this->process($element);
-        $this->compiler->write(']]>');
+        if ($this->getBooleanAttr($element, 'simple', false)) {
+            $this->compiler->write('<![CDATA['.$element->textContent.']]>');
+        } else {
+            $this->compiler->write('<![CDATA[');
+            $this->process($element);
+            $this->compiler->write(']]>');
+        }
     }
 
     /**
