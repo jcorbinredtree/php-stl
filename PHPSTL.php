@@ -115,8 +115,10 @@ class PHPSTL
         $inc = $this->getIncludePath();
         if (isset($inc)) {
             foreach ($inc as $incDir) {
-                $provider = new PHPSTLDirectoryProvider($this, $incDir);
-                $this->addProvider($provider);
+                if (is_dir($incDir)) {
+                    $provider = new PHPSTLDirectoryProvider($this, $incDir);
+                    $this->addProvider($provider);
+                }
             }
         }
     }
