@@ -38,6 +38,42 @@ require_once(dirname(__FILE__).'/PHPSTLLoopIterator.php');
 class CoreTag extends Tag
 {
     /**
+     * Opens a try { ... } catch { ... } block
+     */
+    public function _try(DOMElement &$element)
+    {
+        $this->compiler->write('<?php try { ?>');
+        $this->process($element);
+        $this->compiler->write('<?php } ?>');
+    }
+
+    /**
+     * Catches an error type
+     *
+     * @param type the type to catch, defaults to RuntimeException
+     * @param var the variable to put the exception into, defaults to exception
+     */
+    public function _catch(DOMElement &$element)
+    {
+        $class = $this->getUnquotedAttr($element, 'type', 'RuntimeException');
+        $var = $this->getUnquotedAttr($element, 'var', 'exception');
+        $this->compiler->write("<?php } catch ($class \$$var) { ?>");
+    }
+
+    /**
+     * Throws an exception
+     *
+     * @param type the type of exception to throw, defaults to RuntimeException
+     * @param message the message
+     */
+    public function _throw(DOMElement &$element)
+    {
+        $class = $this->getUnquotedAttr($element, 'type', 'RuntimeException');
+        $message = $this->requiredAttr($element, 'message');
+        $this->compiler->write("<?php throw new $class($message); ?>");
+    }
+
+    /**
      * Represents an if condition
      *
      * @param string test required - the condition to test

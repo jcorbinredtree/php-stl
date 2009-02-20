@@ -91,4 +91,12 @@
   <core:out value="${testVal}" format="boolean" />
 </p>
 
+<p>try/catch:
+  <core:try>
+    <core:throw message="Test Exception" />
+  <core:catch />
+    Got: ${=exception.getMessage()}
+  </core:try>
+</p>
+
 </template>
