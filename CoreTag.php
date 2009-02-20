@@ -255,6 +255,10 @@ class CoreTag extends Tag
                 $value = "money_format('%n', $value)";
             } elseif ($format == 'boolean') {
                 $value = "($value?'Yes':'No')";
+            } else {
+                throw new CompilerException($this->compiler,
+                    "invalid <core:out> format '$format'"
+                );
             }
         }
 
