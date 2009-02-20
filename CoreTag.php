@@ -330,9 +330,7 @@ class CoreTag extends Tag
      */
     public function php(DOMElement &$element)
     {
-        $this->compiler->write('<?php ');
-        $this->process($element);
-        $this->compiler->write('; ?>');
+        $this->compiler->write('<?php '.$element->textContent.'; ?>');
     }
 
     /**
