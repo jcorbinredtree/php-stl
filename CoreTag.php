@@ -49,21 +49,20 @@ class CoreTag extends Tag
         $var = $this->getUnquotedAttr($element, 'var', false);
 
         if ($var) {
-            $this->compiler->write('<?php ' . $var . '=(' . $test . ');?>');
-        }
-        else {
-            $this->compiler->write('<?php if(' . $test . '){ ?>');
+            $this->compiler->write("<?php $var = $test ? true : false; ?>");
+        } else {
+            $this->compiler->write("<?php if($test) { ?>");
             $this->process($element);
             $this->compiler->write('<?php } ?>');
         }
     }
 
     /**
-     * Represents an else condition - obviously only useful after an if
+     * Represents an else condition - obviously only useful after a <core:if>
      */
     public function _else(DOMElement &$element)
     {
-        $this->compiler->write('<?php else{ ?>');
+        $this->compiler->write('<?php else { ?>');
         $this->process($element);
         $this->compiler->write('<?php } ?>');
     }
@@ -77,7 +76,7 @@ class CoreTag extends Tag
     {
         $test = $this->requiredAttr($element, 'test');
 
-        $this->compiler->write('<?php switch(' . $test . '){ ?>');
+        $this->compiler->write("<?php switch ($test) { ?>");
         $this->process($element);
         $this->compiler->write('<?php } ?>');
     }
@@ -91,11 +90,9 @@ class CoreTag extends Tag
     public function _case(DOMElement &$element)
     {
         $test = $this->requiredAttr($element, 'when');
-        $fallThrough = $this->getBooleanAttr($element, 'fallThrough', false);
-
-        $this->compiler->write('<?php case ' . $test . ': ?>');
+        $this->compiler->write("<?php case $test: ?>");
         $this->process($element);
-        if (!$fallThrough) {
+        if (! $this->getBooleanAttr($element, 'fallThrough', false)) {
             $this->compiler->write('<?php break; ?>');
         }
     }
@@ -107,11 +104,9 @@ class CoreTag extends Tag
      */
     public function _default(DOMElement &$element)
     {
-        $fallThrough = $this->getBooleanAttr($element, 'fallThrough', false);
-
         $this->compiler->write('<?php default: ?>');
         $this->process($element);
-        if (!$fallThrough) {
+        if (! $this->getBooleanAttr($element, 'fallThrough', false)) {
             $this->compiler->write('<?php break; ?>');
         }
     }
@@ -126,24 +121,27 @@ class CoreTag extends Tag
     {
         $list = $this->requiredAttr($element, 'list');
         $var = $this->requiredAttr($element, 'var', false);
-        $varStatus = $this->getUnquotedAttr($element, 'varStatus', '__dindex' . uniqid());
+        $varStatus = $this->getUnquotedAttr($element, 'varStatus', '__loop'.uniqid());
 
         if (preg_match('/,/', $var)) {
             $desc = explode(',', $var);
-            $this->compiler->write("<?php\nforeach(".$list.' as $'.$desc[0].' => $'.$desc[1].") {\n  ?>");
+            $this->compiler->write(
+                "<?php foreach($list as \$$desc[0] => \$$desc[1]) { ?>"
+            );
         } else {
             $v = '__tmpo'.uniqid();
-            $this->compiler->write("<?php\n\$$v=".$list.";\n");
-            $this->compiler->write("\$$varStatus = new LoopTagStatus();\n");
-            $this->compiler->write("\$$varStatus"."->count = count(\$$v);\n");
-            $this->compiler->write("for(; \$$varStatus"."->index < \$$varStatus"."->count; \$$varStatus"."->index++) {\n");
-            $this->compiler->write("\$$varStatus".'->current=$'.$var.'=$'.$v.'[$'.$varStatus.'->index];'."\n ?>");
-
+            $this->compiler->write(
+                "<?php \$$v=$list; ".
+                "\$$varStatus = new LoopTagStatus(); ".
+                "\$${varStatus}->count = count(\$$v); ".
+                "for(; \$${varStatus}->index < \$${varStatus}->count; \$${varStatus}->index++) { ".
+                "\$${varStatus}->current=\$$var=\$$v[\$${varStatus}->index]; ?>"
+            );
         }
 
         $this->process($element);
 
-        $this->compiler->write("<?php\n}\n?>");
+        $this->compiler->write("<?php } ?>");
     }
 
     /**
@@ -175,7 +173,7 @@ class CoreTag extends Tag
         $to = $this->requiredAttr($element, 'to', false);
         $var = $this->getUnquotedAttr($element, 'var', 'i');
 
-        $this->compiler->write('<?php for($' . "$var=$from" . '; $' . $var .'<' . $to .'; $' . $var . '++){ ?>');
+        $this->compiler->write("<?php for(\$$var=$from; \$$var<$to; \$$var++){ ?>");
         $this->process($element);
         $this->compiler->write('<?php } ?>');
     }
@@ -192,29 +190,27 @@ class CoreTag extends Tag
         $var = $this->requiredAttr($element, 'var', false);
 
         if ($var[0] != '$') {
-            $var = '$' . $var;
+            $var = "\$$var";
         }
 
         if (preg_match('/,/', $var)) {
             $var = explode(',', $var);
             $vstr = '';
-            for ($i = 0; $i < count($var); $i++) {
+            for ($i=0; $i<count($var); $i++) {
                 $varVal = $var[$i];
                 if ($varVal[0] != '$') {
-                    $varVal = '$' . $varVal;
+                    $varVal = "\$$varVal";
                 }
 
                 $vstr .= $varVal;
 
-                if (($i + 1) < count($var)) {
+                if ($i+1 < count($var)) {
                     $vstr .= ',';
                 }
             }
-
-            $this->compiler->write('<?php list(' . $vstr . ') = ' . $value . '; ?>');
-        }
-        else {
-            $this->compiler->write('<?php ' . $var . ' = ' . $value . '; ?>');
+            $this->compiler->write("<?php list($vstr) = $value; ?>");
+        } else {
+            $this->compiler->write("<?php $var = $value; ?>");
         }
     }
 
@@ -273,7 +269,7 @@ class CoreTag extends Tag
         $var = $this->getUnquotedAttr($element, 'var', false);
         $format = $this->getUnquotedAttr($element, 'format', false);
 
-        if (!$value) {
+        if (! $value) {
             $value = $default;
         }
 
@@ -281,41 +277,38 @@ class CoreTag extends Tag
         if (preg_match('/^date:(.+)/', $format, $matches)) {
             $fstr = $matches[1];
             $value = "date('$fstr',$value)";
-        }
-        elseif ($format == 'int') {
+        } elseif ($format == 'int') {
             $value = "(int) $value";
-        }
-        elseif ($format == 'money') {
+        } elseif ($format == 'money') {
             $value = "money_format('%n', $value)";
-        }
-        elseif ($format == 'boolean') {
+        } elseif ($format == 'boolean') {
             $value = "($value?'Yes':'No')";
         }
 
         if ($escapeXml) {
-            $value = 'htmlentities(' . $value . ')';
+            $value = "htmlentities($value)";
         }
 
         if ($var) {
-            $this->compiler->write('<?php $' . "$var = $value" . '; ?>');
-        }
-        else {
-            $this->compiler->write('<?php echo ' . $value . '; ?>');
+            $this->compiler->write("<?php \$$var = $value; ?>");
+        } else {
+            $this->compiler->write("<?php echo $value; ?>");
         }
     }
 
     /**
-     * Puts out an xml header, such as <?xml version = "1.0" encoding = "utf-8" ?>
+     * Puts out an xml header, such as <?xml version="1.0" encoding="utf-8" ?>
      *
      * @param string encoding optional - the XML encoding, default is utf-8
      * @param string version optional - the XML version, default is 1.0
      */
     public function xmlHeader(DOMElement &$element)
     {
-        $encoding = $this->getUnquotedAttr($element, 'encoding', 'utf-8');
-        $version = $this->getUnquotedAttr($element, 'version', '1.0');
-
-        $this->compiler->write('<?php print \'<?xml version = "' . $version . '" encoding = "' . $encoding . '" ?>\'; ?>');
+        $this->compiler->write(sprintf(
+            '<?php print \'<?xml version="%s" encoding="%s" ?>\'; ?>',
+            $this->getUnquotedAttr($element, 'encoding', 'utf-8'),
+            $this->getUnquotedAttr($element, 'version', '1.0')
+        ));
     }
 
     /**
@@ -360,8 +353,6 @@ class CoreTag extends Tag
         $object = $this->requiredAttr($element, 'object');
         $var = $this->getUnquotedAttr($element, 'var');
 
-        $this->compiler->write('<?php ');
-
         $this->compiler->write('if (!function_exists("json_encode")){
         /* warning: crappy encoding follows */
         function json_encode($obj)
@@ -383,13 +374,12 @@ class CoreTag extends Tag
     	}');
 
         if ($var) {
-            $this->compiler->write('$' . "$var = ");
-        }
-        else {
-            $this->compiler->write('print ');
+            $var = "\$$var =";
+        } else {
+            $var = 'print';
         }
 
-        $this->compiler->write('json_encode(' . $object . '); ?>');
+        $this->compiler->write("<?php $var json_encode($object); ?>");
     }
 
     /**
@@ -424,14 +414,11 @@ class CoreTag extends Tag
         $object = $this->requiredAttr($element, 'var', false);
         $pre = $this->getBooleanAttr($element, 'pre', true);
 
+        $dump = "echo '$object = '.htmlentities(print_r($object, true));";
         if ($pre) {
-            $this->compiler->write('<pre>');
-            $this->compiler->write("<?php echo '$object = '; ?>");
-            $this->compiler->write("<?php echo htmlentities(print_r($object, true)); ?>");
-            $this->compiler->write('</pre>');
+            $this->compiler->write("<pre><?php $dump ?></pre>");
         } else {
-            $this->compiler->write("<?php echo '$object = '; ?>");
-            $this->compiler->write("<?php print_r($object); ?>");
+            $this->compiler->write("<?php $dump ?>");
         }
     }
 }
