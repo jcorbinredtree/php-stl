@@ -63,9 +63,8 @@ class CoreTag extends Tag
     public function _elseif(DOMElement &$element)
     {
         $test = $this->requiredAttr($element, 'test', false);
-        $this->compiler->write("<?php elseif ($test) { ?>");
+        $this->compiler->write("<?php } elseif ($test) { ?>");
         $this->process($element);
-        $this->compiler->write('<?php } ?>');
     }
 
     /**
@@ -73,9 +72,8 @@ class CoreTag extends Tag
      */
     public function _else(DOMElement &$element)
     {
-        $this->compiler->write('<?php else { ?>');
+        $this->compiler->write('<?php } else { ?>');
         $this->process($element);
-        $this->compiler->write('<?php } ?>');
     }
 
     /**
