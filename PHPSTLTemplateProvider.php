@@ -73,11 +73,12 @@ abstract class PHPSTLTemplateProvider
      *
      * @param resource string the string resource to pass to the template constructor
      * @param data mixed the value to set as $template->providerData
+     * @param identified string identifier string override as in PHPSTLTemplate::__construct
      */
-    protected function createTemplate($resource, $data)
+    protected function createTemplate($resource, $data, $identifier=null)
     {
         $class = $this->pstl->getOption('template_class', 'PHPSTLTemplate');
-        $template = new $class($this, $resource);
+        $template = new $class($this, $resource, $identifier);
         $template->providerData = $data;
         return $template;
     }

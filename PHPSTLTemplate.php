@@ -50,14 +50,34 @@ class PHPSTLTemplate
     private $compiled = null;
 
     /**
+     * Holds the string representation returned by __toString
+     *
+     * This is determined in the constructor since the provider might change
+     * its mind about itself between template instantiation and a call to our
+     * __tostring; this would be undesirable since a template's __tostring needs
+     * to be stable for caching.
+     */
+    private $stringRepr;
+
+    /**
      * Constructor
      *
+     * @param provider PHPSTLTemplateProvider the provider that created this
+     * template
      * @param resource string the resource that this template was created from
+     * @param identifier string override the normal identifier string returned
+     * by __tostring, normally bulit as $provider.'/'.$resource
      */
-    public function __construct(PHPSTLTemplateProvider $provider, $resource)
+    public function __construct(PHPSTLTemplateProvider $provider, $resource, $identifier=null)
     {
         $this->provider = $provider;
         $this->resource = $resource;
+
+        if (isset($identifier)) {
+            $this->stringRepr = $identifier;
+        } else {
+            $this->stringRepr = ((string) $this->provider).'/'.$this->resource;
+        }
     }
 
     /**
@@ -287,7 +307,7 @@ class PHPSTLTemplate
      */
     public function __tostring()
     {
-        return ((string) $this->provider).'/'.$this->resource;
+        return $this->stringRepr;
     }
 
     /**
