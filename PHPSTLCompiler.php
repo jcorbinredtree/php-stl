@@ -68,7 +68,7 @@ class PHPSTLCompiler
      *
      * @var string
      */
-    private $template=null;
+    protected $template=null;
 
     /**
      * Our map of classes which are being handled by xmlns's
