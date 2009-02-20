@@ -1,7 +1,7 @@
 <?php
 
 /**
- * LoopTagStatus class definition
+ * PHPSTLLoopIterator class definition
  *
  * PHP version 5
  *
@@ -27,13 +27,11 @@
  */
 
 /**
- * LoopTagStatus
- *
- * This is the status class that mirrors javax.servlet.jsp.jstl.core.LoopTagStatus
+ * PHPSTLLoopIterator
  *
  * @category Tag
  */
-class LoopTagStatus
+class PHPSTLLoopIterator
 {
     public $count = 0;
     public $current = null;

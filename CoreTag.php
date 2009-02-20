@@ -26,7 +26,7 @@
  * @link         http://php-stl.redtreesystems.com
  */
 
-require_once(dirname(__FILE__).'/LoopTagStatus.php');
+require_once(dirname(__FILE__).'/PHPSTLLoopIterator.php');
 
 /**
  * CoreTag
@@ -132,7 +132,7 @@ class CoreTag extends Tag
             $v = '__tmpo'.uniqid();
             $this->compiler->write(
                 "<?php \$$v=$list; ".
-                "\$$varStatus = new LoopTagStatus(); ".
+                "\$$varStatus = new PHPSTLLoopIterator(); ".
                 "\$${varStatus}->count = count(\$$v); ".
                 "for(; \$${varStatus}->index < \$${varStatus}->count; \$${varStatus}->index++) { ".
                 "\$${varStatus}->current=\$$var=\$$v[\$${varStatus}->index]; ?>"
