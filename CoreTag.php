@@ -316,26 +316,6 @@ class CoreTag extends Tag
         $object = $this->requiredAttr($element, 'object');
         $var = $this->getUnquotedAttr($element, 'var');
 
-        $this->compiler->write('if (!function_exists("json_encode")){
-        /* warning: crappy encoding follows */
-        function json_encode($obj)
-        {
-            $obj = (is_array($obj)?$obj:get_object_vars($obj));
-
-            $buf = "{";
-            foreach($obj as $name=>$val){
-                $buf .= "\'$name\':";
-
-                if(!$val) { $buf.="null"; }
-                else { $buf.="\'$val\'"; }
-
-                $buf .= ",";
-            }
-
-            return "$buf}";
-        }
-    	}');
-
         if ($var) {
             $var = "\$$var =";
         } else {
@@ -383,6 +363,22 @@ class CoreTag extends Tag
         } else {
             $this->compiler->write("<?php $dump ?>");
         }
+    }
+}
+
+// crappy json_encode for php <5.2.0
+if (! function_exists('json_encode')) {
+    function json_encode($obj)
+    {
+        $obj = is_array($obj) ? $obj : get_object_vars($obj);
+        $items = array();
+        foreach ($obj as $name=>$val) {
+            array_push(sprintf("'%s':%s",
+                $name,
+                isset($val) ? 'null' : "'$val'"
+            ));
+        }
+        return '{'.implode(', ', $items).'}';
     }
 }
 
