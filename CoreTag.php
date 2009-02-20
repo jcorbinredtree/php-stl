@@ -129,13 +129,10 @@ class CoreTag extends Tag
                 "<?php foreach($list as \$$desc[0] => \$$desc[1]) { ?>"
             );
         } else {
-            $v = '__tmpo'.uniqid();
             $this->compiler->write(
-                "<?php \$$v=$list; ".
-                "\$$varStatus = new PHPSTLLoopIterator(); ".
-                "\$${varStatus}->count = count(\$$v); ".
+                "<?php \$$varStatus = new PHPSTLLoopIterator($list); ".
                 "for(; \$${varStatus}->index < \$${varStatus}->count; \$${varStatus}->index++) { ".
-                "\$${varStatus}->current=\$$var=\$$v[\$${varStatus}->index]; ?>"
+                "\$${varStatus}->current=\$$var=\$${varStatus}->list[\$${varStatus}->index]; ?>"
             );
         }
 

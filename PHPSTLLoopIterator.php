@@ -36,6 +36,14 @@ class PHPSTLLoopIterator
     public $count = 0;
     public $current = null;
     public $index = 0;
+    public $list = null;
+
+    public function __construct($list)
+    {
+        $this->list = $list;
+        $this->count = count($this->list);
+        $this->current = $this->list[0];
+    }
 
     public function isFirst()
     {
