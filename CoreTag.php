@@ -212,40 +212,6 @@ class CoreTag extends Tag
     }
 
     /**
-     * Includes another template
-     *
-     * @param string template required - the other template to include
-     */
-    public function display(DOMElement &$element)
-    {
-        $template = $this->requiredAttr($element, 'template');
-        $args = $this->getUnquotedAttr($element, 'args');
-        $holder = '__' . uniqid();
-
-        if ($args) {
-            $args = explode(',', $args);
-            $this->compiler->write('<?php $this->' . $holder . '=array();');
-            foreach ($args as $al) {
-                list($name, $val) = explode('=', $al);
-
-                $this->compiler->write('if(property_exists($this,"' . $name . '")){');
-                $this->compiler->write('$this->' . $holder . '["' . $name . '"]=$this->' . $name . ';');
-                $this->compiler->write('}');
-                $this->compiler->write('$this->' . $name . '=' . $val . ';');
-            }
-            $this->compiler->write('?>');
-        }
-
-        $this->compiler->write('<?php $this->display(' . $template . '); ?>');
-
-        if (count($args)) {
-            $this->compiler->write('<?php foreach($this->' . $holder . ' as $__n=>$__v){');
-            $this->compiler->write('$this->$__n=$__v;');
-            $this->compiler->write('}?>');
-        }
-    }
-
-    /**
      * Prints out a value
      *
      * @param string value required - the value to output
