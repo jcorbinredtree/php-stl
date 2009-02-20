@@ -285,27 +285,6 @@ class CoreTag extends Tag
     }
 
     /**
-     * Puts out a doctype
-     *
-     * @param string type required - the only supported value is 'xhtml 1.1'
-     */
-    public function doctype(DOMElement $element)
-    {
-        $type = $this->requiredAttr($element, 'type', false);
-
-        switch ($type) {
-            case 'xhtml 1.0':
-                $this->compiler->write('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">');
-                break;
-            case 'xhtml 1.1':
-                $this->compiler->write('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">');
-                break;
-            default:
-                die("Unknown doctype $type in $element->nodeName");
-        }
-    }
-
-    /**
      * Converts your object to json .. hopefully :-/
      *
      * @param object the object you wish to convert
