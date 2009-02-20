@@ -38,6 +38,14 @@ require_once(dirname(__FILE__).'/PHPSTLLoopIterator.php');
 class CoreTag extends Tag
 {
     /**
+     * Static function call setup by CoreTag::xmlHeader
+     */
+    public static function BuildXMLHeader($ver='1.0', $enc='utf-8')
+    {
+        return "<?xml version=\"$ver\" encoding=\"$enc\"?>\n";
+    }
+
+    /**
      * Opens a try { ... } catch { ... } block
      */
     public function _try(DOMElement &$element)
@@ -314,14 +322,17 @@ class CoreTag extends Tag
      *
      * @param string encoding optional - the XML encoding, default is utf-8
      * @param string version optional - the XML version, default is 1.0
+     *
+     * @see CoreTag::BuildXMLHeader
      */
     public function xmlHeader(DOMElement &$element)
     {
-        $this->compiler->write(sprintf(
-            '<?php print \'<?xml version="%s" encoding="%s" ?>\'; ?>',
-            $this->getUnquotedAttr($element, 'encoding', 'utf-8'),
-            $this->getUnquotedAttr($element, 'version', '1.0')
-        ));
+        $this->compiler->write(
+            "<?php echo CoreTag::BuildXMLHeader(".$this->argList(array(
+                $this->getAttr($element, 'version'),
+                $this->getAttr($element, 'encoding')
+            ))."); ?>"
+        );
     }
 
     /**
