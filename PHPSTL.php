@@ -149,7 +149,10 @@ class PHPSTL
      */
     public function getOption($name, $default=null)
     {
-        if (array_key_exists($name, $this->options)) {
+        if (
+            array_key_exists($name, $this->options) &&
+            isset($this->options[$name])
+        ) {
             return $this->options[$name];
         } else {
             return $default;
