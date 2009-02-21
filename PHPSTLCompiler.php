@@ -219,6 +219,9 @@ class PHPSTLCompiler
         $class = $matches[1];
 
         if (! isset($this->handler[$class])) {
+            if (! class_exists($class) && function_exists('__autoload')) {
+                __autoload($class);
+            }
             if (! class_exists($class)) {
                 throw new PHPSTLCompilerException($this,
                     "No such Tag class $class for $uri"
