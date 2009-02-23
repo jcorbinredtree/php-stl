@@ -152,6 +152,29 @@ abstract class Tag
     }
 
     /**
+     * Tests whether the given value is boolean
+     *
+     * @param mixed value
+     * @return mixed
+     *   true if value is 'true', or 'yes'
+     *   false if value is 'false', or 'no'
+     *   null otherwise
+     */
+    protected function booleanValue($value)
+    {
+        switch ($value) {
+            case 'true':
+            case 'yes':
+                return true;
+            case 'false':
+            case 'no':
+                return false;
+            default:
+                return null;
+        }
+    }
+
+    /**
      * Get a boolean attribute from $element
      *
      * @param DOMElement $element the target element
@@ -165,18 +188,15 @@ abstract class Tag
             return $default;
         }
 
-        switch ($element->getAttribute($attr)) {
-            case 'true':
-            case 'yes':
-                return true;
-            case 'false':
-            case 'no':
-                return false;
+        $bool = $this->booleanValue($element->getAttribute($attr));
+
+        if (! isset($bool)) {
+            throw new InvalidArgumentException(
+                "Invalid boolean attribute $attr specified for $element->nodeName"
+            );
         }
 
-        throw new InvalidArgumentException(
-            "Invalid boolean attribute $attr specified for $element->nodeName"
-        );
+        return $bool;
     }
 
     /**
@@ -278,7 +298,12 @@ abstract class Tag
             }
             $value = $this->getUnquotedAttr($element, $attr, $default);
             if (isset($value)) {
-                $opts[$attr] = $value;
+                $bool = $this->booleanValue($value);
+                if (isset($bool)) {
+                    $opts[$attr] = $bool;
+                } else {
+                    $opts[$attr] = $value;
+                }
             }
         }
         if ($asArray) {
@@ -300,6 +325,13 @@ abstract class Tag
         assert(is_array($attrs));
         $r = '';
         foreach ($attrs as $attr => $value) {
+            if ($value === false) {
+                $r .= " $attr=\"false\"";
+                continue;
+            } elseif ($value === true) {
+                $r .= " $attr=\"true\"";
+                continue;
+            }
             $r .= " $attr=\"$value\"";
         }
         return $r;
