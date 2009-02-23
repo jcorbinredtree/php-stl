@@ -276,6 +276,11 @@ abstract class Tag
     /**
      * Collects attributes from an element and return them
      *
+     * HTML-style boolean handling is on by default, see getAttributeString for
+     * what this means. The $attrs array argument may define a special named
+     * member '-no-html-boolean', if set to a true value, will cause boolean
+     * attributes to be emited "normally" rathre than in the html way.
+     *
      * @param element DOMElement the element
      * @param attrs array array of attribute names to process; can
      * also contain named key => value pairs specifying default values in
@@ -285,10 +290,19 @@ abstract class Tag
      * associative array of collected values, otherwise returns a string
      * like ' attr="val" attr="val"'
      * @return string or array
+     * @see getAttributeString
      */
     protected function getAttributes(DOMElement &$element, $attrs, $asArray=false)
     {
         assert(is_array($attrs));
+
+        $htmlBoolean = true;
+        if (
+            array_key_exists('-no-html-boolean', $attrs) &&
+            $attrs['-no-html-boolean']
+        ) {
+            $htmlBoolean = false;
+        }
 
         $opts = array();
         foreach ($attrs as $attr => $default) {
@@ -309,7 +323,7 @@ abstract class Tag
         if ($asArray) {
             return $opts;
         } else {
-            return $this->getAttributeString($opts);
+            return $this->getAttributeString($opts, $htmlBoolean);
         }
     }
 
@@ -318,18 +332,26 @@ abstract class Tag
      * associative array.
      *
      * @param attrs array
+     * @param htmlBoolean boolean if true, boolean values will be output as
+     * ' name="name"' if true or '' if false
      * @return string
      */
-    protected function getAttributeString($attrs)
+    protected function getAttributeString($attrs, $htmlBoolean=true)
     {
         assert(is_array($attrs));
         $r = '';
         foreach ($attrs as $attr => $value) {
             if ($value === false) {
-                $r .= " $attr=\"false\"";
+                if (! $htmlBoolean) {
+                    $r .= " $attr=\"false\"";
+                }
                 continue;
             } elseif ($value === true) {
-                $r .= " $attr=\"true\"";
+                if ($htmlBoolean) {
+                    $r .= " $attr=\"$attr\"";
+                } else {
+                    $r .= " $attr=\"true\"";
+                }
                 continue;
             }
             $r .= " $attr=\"$value\"";
