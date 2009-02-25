@@ -339,7 +339,11 @@ class PHPSTLCompiler
             $this->dom->normalizeDocument();
 
             $this->writeTemplateHeader();
-
+            foreach ($this->dom->documentElement->attributes as $name => $node) {
+                if ($handler = $this->getHandler($node)) {
+                    $handler->__handleDocumentElementAttribute($node);
+                }
+            }
             foreach ($this->dom->documentElement->childNodes as $node) {
                 $this->process($node);
             }

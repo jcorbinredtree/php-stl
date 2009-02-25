@@ -53,6 +53,22 @@ abstract class Tag
     }
 
     /**
+     * Dispatches a DOMAttr on the template documentElement to be handled by
+     * this Tag subclass instance
+     */
+    public function __handleDocumentElementAttribute(DOMAttr &$attr)
+    {
+        $method = '__docAttr'.ucfirst($attr->name);
+        if (! method_exists($this, $method)) {
+            throw new PHPSTLCompilerException($this->compiler,
+                "cannot handle $attr->prefix:$attr->name attribute on <".
+                $attr->parentNode->nodeName.'>'
+            );
+        }
+        return $this->$method($attr);
+    }
+
+    /**
      * Dispatches a DOMElement to be handled by this Tag subclass instance
      *
      * Given an element named <ns:method />, this will look for a method
