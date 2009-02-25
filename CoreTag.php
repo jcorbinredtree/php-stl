@@ -99,6 +99,106 @@ class CoreTag extends Tag
         return "<!DOCTYPE $root $access \"$id\"$url>\n";
     }
 
+    static $extData = array();
+    private static function hasExtensionData(PHPSTLTemplate &$template)
+    {
+        return property_exists($template, '__coreTagExtensionId');
+    }
+
+    private static function &extensionData(PHPSTLTemplate &$template)
+    {
+        return self::$extData[$template->__coreTagExtensionId];
+    }
+
+    public static function closeExtension(PHPSTLTemplate &$template, $name, $buffer)
+    {
+        if (! self::hasExtensionData($template)) {
+            throw new RuntimeException('no template extension data available');
+        }
+        $d =& self::extensionData($template);
+        if (array_key_exists($name, $d)) {
+            $d[$name] .= $buffer;
+        } else {
+            $d[$name] = $buffer;
+        }
+    }
+
+    public static function startExtends(PHPSTLTemplate &$template)
+    {
+        if (self::hasExtensionData($template)) {
+            throw new RuntimeException(
+                'template defines more than one extends'
+            );
+        }
+
+        $id = uniqid();
+        $template->__coreTagExtensionId = $id;
+        self::$extData[$id] = array();
+
+        @ob_start();
+    }
+
+    public static function finishExtends(PHPSTLTemplate &$template, $extended)
+    {
+        self::closeExtension($template, 'content', @ob_get_clean());
+        $pstl = $template->getProvider()->getPHPSTL();
+        $parent = $pstl->load($extended);
+
+        $d =& self::extensionData($template);
+        unset(self::$extData[$template->__coreTagExtensionId]);
+        unset($template->__coreTagExtensionId);
+        print $parent->render($d);
+    }
+
+    /**
+     * Declares that this template extends another
+     *
+     * A template can only extend one template
+     *
+     * This implicitly opens an extension named 'content' as if all content
+     * following this tag were wrapped in a
+     *   <core:extension name="content">...</core:extension>
+     *
+     * The extended template will be processed immedately after the calling
+     * template is finished, with rendering arguments set named after each
+     * defined extension
+     *
+     * @param template string the template resource to extend
+     */
+    public function _extends(DOMElement &$element)
+    {
+        $this->writeExtends($this->requiredAttr($element, 'template', false));
+    }
+
+    public function __docAttrExtends(DOMAttr &$attr)
+    {
+        $this->writeExtends($attr->value);
+    }
+
+    private function writeExtends($template)
+    {
+        if ($this->needsQuote($template)) {
+            $template = $this->quote($template);
+        }
+        $this->compiler->write(
+            '<?php CoreTag::startExtends($this); ?>'
+        );
+        $this->compiler->writeFooter(
+            "<?php CoreTag::finishExtends(\$this, $template); ?>"
+        );
+    }
+
+    /**
+     * Defines a template extension
+     */
+    public function _extension(DOMElement &$element)
+    {
+        $name = $this->requiredAttr($element, 'name');
+        $this->compiler->write('<?php @ob_start(); ?>');
+        $this->process($element);
+        $this->compiler->write("<?php CoreTag::closeExtension(\$this, $name, @ob_get_clean()); ?>");
+    }
+
     /**
      * Opens a try { ... } catch { ... } block
      */

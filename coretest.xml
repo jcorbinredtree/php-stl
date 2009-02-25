@@ -1,7 +1,6 @@
 <template
-  xmlns:core="class://CoreTag">
-
-<core:xmlHeader version="0.9" encoding="iso-8859" />
+  xmlns:core="class://CoreTag"
+  core:extends="coretestext.xml">
 
 <ul>
   <core:forEach list="@{explode(',', 'a,b,c,d')}" var="i">
@@ -98,5 +97,9 @@
     Got: ${=exception.getMessage()}
   </core:try>
 </p>
+
+<core:extension name="left">
+  abc
+</core:extension>
 
 </template>

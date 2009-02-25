@@ -1,0 +1,13 @@
+<template xmlns:core="class://CoreTag">
+
+<core:xmlHeader version="0.9" encoding="iso-8859" />
+
+<div class="left">
+${=this.left}
+</div>
+
+<div class="extwrap">
+${=this.content}
+</div>
+
+</template>
