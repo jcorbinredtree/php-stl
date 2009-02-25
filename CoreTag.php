@@ -354,7 +354,7 @@ class CoreTag extends Tag
             } elseif ($format == 'boolean') {
                 $value = "($value?'Yes':'No')";
             } else {
-                throw new CompilerException($this->compiler,
+                throw new PHPSTLCompilerException($this->compiler,
                     "invalid <core:out> format '$format'"
                 );
             }

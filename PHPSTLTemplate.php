@@ -124,7 +124,7 @@ class PHPSTLTemplate
     }
 
     /**
-     * Assigns asingle template argument
+     * Assigns a single template argument
      *
      * Template arguments are simply object properties on the PHPSTLTemplate
      * object itself
