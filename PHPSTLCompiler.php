@@ -61,6 +61,7 @@ class PHPSTLCompiler
      * @var string
      */
     private $buffer;
+    private $footerBuffer;
 
     /**
      * The current template
@@ -204,6 +205,16 @@ class PHPSTLCompiler
     }
 
     /**
+     * Writes data to the footer, this will go after all other normal output
+     * @param string $out
+     * @return void
+     */
+    public function writeFooter($out)
+    {
+        $this->footerBuffer .= $out;
+    }
+
+    /**
      * Gets the class that will be used to handle $uri
      *
      * @param string $uri the specified xmlns uri
@@ -296,6 +307,14 @@ class PHPSTLCompiler
     }
 
     /**
+     * Called by parse after all elements have been processed
+     */
+    protected function writeTemplateFooter()
+    {
+        $this->write($this->footerBuffer);
+    }
+
+    /**
      * Parses the given template content
      *
      * Calls cleanupParse on failure or success
@@ -311,6 +330,7 @@ class PHPSTLCompiler
         }
         try {
             $this->buffer = '';
+            $this->footerBuffer = '';
             $this->dom = new DOMDocument();
             $this->dom->preserveWhiteSpace = true;
 
@@ -325,6 +345,7 @@ class PHPSTLCompiler
             foreach ($this->dom->documentElement->childNodes as $node) {
                 $this->process($node);
             }
+            $this->writeTemplateFooter();
 
             // normalize php blocks
             $this->buffer = preg_replace('/\s*\?>\s*?<\?php\s*/si', "\n", $this->buffer);
@@ -356,6 +377,7 @@ class PHPSTLCompiler
     protected function cleanupParse()
     {
         $this->buffer = null;
+        $this->footerBuffer = null;
         $this->dom = null;
     }
 }
