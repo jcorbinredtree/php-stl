@@ -1,13 +1,14 @@
 <template xmlns:core="class://CoreTag">
+<core:param name="left" />
+<core:param name="right" />
+<core:param name="content" />
 
 <core:xmlHeader version="0.9" encoding="iso-8859" />
 
-<div class="left">
-${=this.left}
-</div>
+<div class="left">${=left}</div>
 
-<div class="extwrap">
-${=this.content}
-</div>
+<div class="right">${=right}</div>
+
+<div class="extwrap">${=content}</div>
 
 </template>

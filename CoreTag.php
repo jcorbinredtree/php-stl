@@ -199,6 +199,100 @@ class CoreTag extends Tag
         $this->compiler->write("<?php CoreTag::closeExtension(\$this, $name, @ob_get_clean()); ?>");
     }
 
+    static $ParamNoValue;
+    public static function initParam(PHPSTLTemplate &$template, $name, $required)
+    {
+        if (! isset(self::$ParamNoValue)) {
+            self::$ParamNoValue = new stdClass();
+        }
+        if (property_exists($template, $name)) {
+            return $template->$name;
+        } else {
+            if ($required) {
+                throw new RuntimeException(
+                    "required template argument '$name' not set for $template"
+                );
+            } else {
+                return self::$ParamNoValue;
+            }
+        }
+    }
+
+    /**
+     * Defines a template parameter.
+     *
+     * Template parameters map values assigned through PHPSTLTemplate::assign to
+     * local variables inside a template document as well as providing default
+     * values and optionally raising an exception if the paramater is not set by
+     * the template's caller
+     *
+     * Example:
+     *   <core:param name="when" type="int" required="true" />
+     *   <!-- or provide a default instead of raising an error: -->
+     *   <core:param name="when" type="int" default="@{time()}" />
+     */
+    public function param(DOMElement &$element)
+    {
+        $name = $this->requiredAttr($element, 'name', false);
+        $type = $this->getUnquotedAttr($element, 'type', 'string');
+        $required = $this->getBooleanAttr($element, 'required');
+        $required = $required ? 'true' : 'false';
+        if ($type == 'bool' || $type == 'boolean') {
+            $default = $this->getBooleanAttr($element, 'default');
+        } else {
+            $default = $this->getAttr($element, 'default');
+        }
+        $builtin = in_array($type,
+            array('string', 'int', 'float', 'double', 'bool', 'boolean')
+        );
+        if (! $builtin && ! class_exists($type)) {
+            throw new PHPSTLCompilerException($this->compiler,
+                "invalid param type '$type'"
+            );
+        }
+        if ($default == 'null' || ! isset($default)) {
+            switch ($type) {
+            case 'string':
+                $default = "''";
+                break;
+            case 'int':
+            case 'float':
+            case 'double':
+                $default = 0;
+                break;
+            case 'bool':
+            case 'boolean':
+                $default = 'false';
+                break;
+            default:
+                $default = 'null';
+            }
+        } else {
+            if ($default === true) {
+                $default = 'true';
+            } elseif ($default === false) {
+                $default = 'false';
+            } elseif ($builtin) {
+                $default = "($type) $default";
+            }
+        }
+        $var = "\$$name";
+        if ($this->needsQuote($name)) {
+            $name = $this->quote($name);
+        } else {
+            $name = $name;
+        }
+        $cast = $builtin ? "($type) " : '';
+        $this->compiler->write(
+            "<?php $var = CoreTag::initParam(\$this, $name, $required);\n".
+            "if ($var === CoreTag::\$ParamNoValue) {\n".
+            "  $var = $cast$default;\n".
+            "} else {\n".
+            "  $var = $cast$var;\n".
+            "} ?>"
+        );
+    }
+
     /**
      * Opens a try { ... } catch { ... } block
      */
