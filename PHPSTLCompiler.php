@@ -158,11 +158,9 @@ class PHPSTLCompiler
         }
 
         // There's a handler for this node
-        if ($currentNode->namespaceURI) {
-            if ($handler = $this->getHandler($currentNode->namespaceURI)) {
-                $handler->__dispatch($currentNode);
-                return;
-            }
+        if ($handler = $this->getHandler($currentNode)) {
+            $handler->__dispatch($currentNode);
+            return;
         }
 
         $this->write("<$currentNode->nodeName");
@@ -217,14 +215,14 @@ class PHPSTLCompiler
     /**
      * Gets the class that will be used to handle $uri
      *
-     * @param string $uri the specified xmlns uri
+     * @param DOMNode $node
      * @return Tag an instance of Tag to be used to process this tag
      */
-    private function getHandler($uri)
+    private function getHandler($node)
     {
         $matches = array();
 
-        if (! preg_match('|^class://(.+)|', $uri, $matches)) {
+        if (! preg_match('|^class://(.+)|', $node->namespaceURI, $matches)) {
             return null;
         }
         $class = $matches[1];
@@ -235,13 +233,13 @@ class PHPSTLCompiler
             }
             if (! class_exists($class)) {
                 throw new PHPSTLCompilerException($this,
-                    "No such Tag class $class for $uri"
+                    "No such Tag class $class for $node->namespaceURI"
                 );
             }
 
             if (! is_subclass_of($class, 'Tag')) {
                 throw new PHPSTLCompilerException($this,
-                    "$class is not a subclass of Tag for $uri"
+                    "$class is not a subclass of Tag for $node->namespaceURI"
                 );
             }
 
