@@ -35,6 +35,33 @@
 abstract class PHPSTLTemplateProvider
 {
     /**
+     * Iterates a list of providers in an attemp to load a resource
+     *
+     * @param providers array of PHPSTLTemplateProvider
+     * @param resource string
+     * @return PHPSTLTemplate on success, null otherwise
+     * @see PHPSTLTemplateProvider::load
+     */
+    public static function provide($providers, $resource)
+    {
+        assert(is_array($providers));
+        assert(is_string($resource));
+        foreach ($providers as $provider) {
+            $r = $provider->load($resource);
+            if (is_object($r) && is_a($r, 'PHPSTLTemplate')) {
+                return $r;
+            } elseif ($r === PHPSTLTemplateProvider::DECLINE) {
+                continue;
+            } elseif ($r === PHPSTLTemplateProvider::FAIL) {
+                // A provider can explicitly fail a resource
+                break;
+            }
+        }
+        // Either every provider declined, or one of them failed
+        return null;
+    }
+
+    /**
      * Return constants
      */
     const DECLINE = 1;

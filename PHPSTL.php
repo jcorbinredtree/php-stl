@@ -240,19 +240,12 @@ class PHPSTL
      */
     public function load($resource)
     {
-        foreach ($this->providers as $provider) {
-            $r = $provider->load($resource);
-            if (is_object($r) && is_a($r, 'PHPSTLTemplate')) {
-                return $r;
-            } elseif ($r === PHPSTLTemplateProvider::DECLINE) {
-                continue;
-            } elseif ($r === PHPSTLTemplateProvider::FAIL) {
-                // A provider can explicitly fail a resource
-                break;
-            }
+        $r = PHPSTLTemplateProvider::provide($this->providers, $resource);
+        if (isset($r)) {
+            return $r;
+        } else {
+            throw new PHPSTLNoSuchResource($this, $resource);
         }
-        // Either every provider declined, or one of them failed
-        throw new PHPSTLNoSuchResource($this, $resource);
     }
 
     /**
