@@ -341,7 +341,7 @@ class CoreTag extends Tag
         $var = $this->getUnquotedAttr($element, 'var', false);
 
         if ($var) {
-            $this->compiler->write("<?php $var = $test ? true : false; ?>");
+            $this->compiler->write("<?php $var = (bool) $test; ?>");
         } else {
             $this->compiler->write("<?php if($test) { ?>");
             $this->process($element);
