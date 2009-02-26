@@ -68,7 +68,7 @@ class PHPSTL
      *
      * @param options arary optinal named array of options
      *   Options (all are optional):
-     *     include_path    can be either a comma-seperated string list of directories or
+     *     include_path    can be either a comma-separated string list of directories or
      *                     an array of directory strings; a PHPSTLDirectoryProvider is
      *                     created for each item in the list
      *     allow_abs_path  whether to allow absolute file paths, default false
