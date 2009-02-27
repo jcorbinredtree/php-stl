@@ -103,7 +103,7 @@ abstract class Tag
         ) {
             throw new PHPSTLCompilerException($this->compiler,
                 "Won't call internal ".get_class($this).
-                " method for element ".$element->nodeNode
+                " method for element ".$element->nodeName
             );
         }
 
