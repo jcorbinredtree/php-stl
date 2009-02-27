@@ -243,7 +243,7 @@ abstract class Tag
         }
 
         if ($this->needsQuote($val)) {
-            return "'$val'";
+            return "'".addslashes($val)."'";
         }
 
         return $val;
