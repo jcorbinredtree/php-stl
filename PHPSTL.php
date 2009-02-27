@@ -83,14 +83,14 @@ class PHPSTL
     {
         $this->options = array_merge($this->options, $options);
 
-        $cacheClass = $this->getOption('cache_class', 'PHPSTLDiskCache');
+        $cacheClass = $this->getCacheClass();
         if (! is_subclass_of($cacheClass, 'PHPSTLTemplateCache')) {
             throw new InvalidArgumentException(
                 "cache_class $cacheClass isn't derived from PHPSTLTemplateCache"
             );
         }
 
-        $compilerClass = $this->getOption('compiler_class', 'PHPSTLCompiler');
+        $compilerClass = $this->getComplilerClass();
         if (
             $compilerClass != 'PHPSTLCompiler' &&
             ! is_subclass_of($compilerClass, 'PHPSTLCompiler')
@@ -100,7 +100,7 @@ class PHPSTL
             );
         }
 
-        $templateClass = $this->getOption('template_class', 'PHPSTLTemplate');
+        $templateClass = $this->getTemplateClass();
         if (
             $templateClass != 'PHPSTLTemplate' &&
             ! is_subclass_of($templateClass, 'PHPSTLTemplate')
@@ -122,6 +122,21 @@ class PHPSTL
                 }
             }
         }
+    }
+
+    public function getCacheClass()
+    {
+        return $this->getOption('cache_class', 'PHPSTLDiskCache');
+    }
+
+    public function getComplilerClass()
+    {
+        return $this->getOption('compiler_class', 'PHPSTLCompiler');
+    }
+
+    public function getTemplateClass()
+    {
+        return $this->getOption('template_class', 'PHPSTLTemplate');
     }
 
     /**
