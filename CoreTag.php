@@ -679,6 +679,42 @@ class CoreTag extends Tag
             $this->compiler->write("<?php $dump ?>");
         }
     }
+
+    public static function RenderTemplate(PHPSTLTemplate &$template, $resource, $args)
+    {
+        assert(is_array($args));
+        $pstl = $template->getProvider()->getPHPSTL();
+        $sub = $template->load($resource);
+        print $sub->render($args);
+    }
+
+    /**
+     * Processes another template
+     * @param resource the template resource to process
+     */
+    public function render(DOMElement &$element)
+    {
+        $res = $this->requiredAttr($element, 'resource');
+        $args = array();
+        foreach ($element->childNodes as $n) {
+            if ($n->nodeType == XML_ELEMENT_NODE) {
+                $name = $this->requiredAttr($n, 'name', false);
+                $value = $this->requiredAttr($n, 'value', true);
+                switch ($n->tagName) {
+                case 'arg':
+                    $name = addslashes($name);
+                    array_push($args, "'$name' => $value");
+                    break;
+                default:
+                    throw new RuntimeException(
+                        'element '.$n->nodeName.' in '.$element->nodeName
+                    );
+                }
+            }
+        }
+        $args = "array(\n  ".implode(",\n  ", $args).")";
+        $this->compiler->write("<?php CoreTag::RenderTemplate(\$this, $resource, $args); ?>");
+    }
 }
 
 // crappy json_encode for php <5.2.0
