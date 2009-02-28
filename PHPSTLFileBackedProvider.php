@@ -86,7 +86,7 @@ abstract class PHPSTLFileBackedProvider extends PHPSTLTemplateProvider
             $mess = ob_get_clean();
             throw new RuntimeException("Failed to read $file: $mess");
         }
-        ob_end_flush();
+        ob_end_clean();
         return $content;
     }
 }

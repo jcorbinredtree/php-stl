@@ -208,7 +208,7 @@ class PHPSTLDiskCache extends PHPSTLTemplateCache
             $mess = ob_get_clean();
             throw new RuntimeException("Could not write $file: $mess");
         }
-        ob_end_flush();
+        ob_end_clean();
         return $file;
     }
 
