@@ -36,12 +36,17 @@ class PHPSTLDirectoryProvider extends PHPSTLFileBackedProvider
     protected $path;
 
     /**
+     * The temtplate file suffix
+     */
+    protected $suffix;
+
+    /**
      * Constructor
      *
      * @param pstl PHPSTL
      * @param path string trailing slashes are not needed and will be stripped
      */
-    public function __construct(PHPSTL $pstl, $path)
+    public function __construct(PHPSTL $pstl, $path, $suffix='.xml')
     {
         $path = realpath($path);
         if ($path === false || ! is_dir($path)) {
@@ -50,6 +55,7 @@ class PHPSTLDirectoryProvider extends PHPSTLFileBackedProvider
 
         parent::__construct($pstl);
         $this->path = $path;
+        $this->suffix = $suffix;
     }
 
     /**
@@ -61,7 +67,7 @@ class PHPSTLDirectoryProvider extends PHPSTLFileBackedProvider
      */
     protected function getResourceFile($resource)
     {
-        $path = realpath("$this->path/$resource");
+        $path = realpath("$this->path/$resource$this->suffix");
         if ($path == false || ! is_file($path)) {
             return null;
         } else {
