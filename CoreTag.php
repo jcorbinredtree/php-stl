@@ -683,8 +683,7 @@ class CoreTag extends Tag
     public static function RenderTemplate(PHPSTLTemplate &$template, $resource, $args)
     {
         assert(is_array($args));
-        $pstl = $template->getProvider()->getPHPSTL();
-        $sub = $template->load($resource);
+        $sub = $template->getProvider()->getPHPSTL()->load($resource);
         print $sub->render($args);
     }
 
@@ -713,7 +712,7 @@ class CoreTag extends Tag
             }
         }
         $args = "array(\n  ".implode(",\n  ", $args).")";
-        $this->compiler->write("<?php CoreTag::RenderTemplate(\$this, $resource, $args); ?>");
+        $this->compiler->write("<?php CoreTag::RenderTemplate(\$this, $res, $args); ?>");
     }
 }
 
