@@ -15,7 +15,6 @@
  *
  * The Original Code is Red Tree Systems Code.
  *
- * @category     Tag
  * @author       Red Tree Systems, LLC <php-stl@redtreesystems.com>
  * @copyright    2007 Red Tree Systems, LLC
  * @license      MPL 1.1
@@ -29,10 +28,8 @@ require_once(dirname(__FILE__).'/PHPSTLLoopIterator.php');
  * CoreTag
  *
  * This class provides core tag functionality
- *
- * @category Tag
  */
-class CoreTag extends Tag
+class CoreTag extends PHPSTLNSHandler
 {
     /**
      * Static function call setup by CoreTag::xmlHeader

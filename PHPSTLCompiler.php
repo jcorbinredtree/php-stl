@@ -22,7 +22,7 @@
  * @link         http://php-stl.redtreesystems.com
  */
 
-require_once dirname(__FILE__).'/Tag.php';
+require_once dirname(__FILE__).'/PHPSTLNSHandler.php';
 require_once dirname(__FILE__).'/CoreTag.php';
 
 /**
@@ -237,7 +237,8 @@ class PHPSTLCompiler
      * if we can't handle it
      *
      * @param DOMNode $node
-     * @return Tag an instance of Tag to be used to process this tag
+     * @return PHPSTLNSHandler an instance of PHPSTLNSHandler that should handle
+     * the given namespace
      */
     protected function handleNamespace($namespace)
     {
@@ -257,13 +258,13 @@ class PHPSTLCompiler
                     }
                     if (! class_exists($class)) {
                         throw new PHPSTLCompilerException($this,
-                            "No such Tag class $class for $namespace"
+                            "No such PHPSTLNSHandler class $class for $namespace"
                         );
                     }
                 }
-                if (! is_subclass_of($class, 'Tag')) {
+                if (! is_subclass_of($class, 'PHPSTLNSHandler')) {
                     throw new PHPSTLCompilerException($this,
-                        "$class is not a subclass of Tag for $namespace"
+                        "$class is not a subclass of PHPSTLNSHandler for $namespace"
                     );
                 }
                 $this->handlers[$namespace] = new $class($this);

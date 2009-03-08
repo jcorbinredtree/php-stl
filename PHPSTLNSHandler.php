@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Tag base class definition
+ * PHPSTLNSHandler base class definition
  *
  * PHP version 5
  *
@@ -15,7 +15,6 @@
  *
  * The Original Code is Red Tree Systems Code.
  *
- * @category     Tag
  * @author       Red Tree Systems, LLC <php-stl@redtreesystems.com>
  * @copyright    2007 Red Tree Systems, LLC
  * @license      MPL 1.1
@@ -24,36 +23,36 @@
  */
 
 /**
- * Tag
- *
- * This class provides a tag handler base class
- *
- * @category     Tag
+ * Handles custom namespaces for PHPSTL
  */
-abstract class Tag
+abstract class PHPSTLNSHandler
 {
     /**
-     * The compiler to write to
-     *
      * @var PHPSTLCompiler
      */
     protected $compiler;
 
     /**
-     * Constructor
-     *
      * @param PHPSTLCompiler $compiler
      */
-    public function __construct(PHPSTLCompiler &$compiler)
+    public function __construct(PHPSTLCompiler $compiler)
     {
         $this->compiler = $compiler;
     }
 
     /**
-     * Dispatches a DOMAttr on the template documentElement to be handled by
-     * this Tag subclass instance
+     * @return PHPSTLCompiler
      */
-    public function __handleDocumentElementAttribute(DOMAttr &$attr)
+    public function getCompiler()
+    {
+        return $this->compiler;
+    }
+
+    /**
+     * Dispatches a DOMAttr on the template documentElement to be handled by
+     * this PHPSTLNSHandler subclass
+     */
+    public function __handleDocumentElementAttribute(DOMAttr $attr)
     {
         $method = '__docAttr'.ucfirst($attr->name);
         if (! method_exists($this, $method)) {
@@ -66,7 +65,7 @@ abstract class Tag
     }
 
     /**
-     * Dispatches a DOMElement to be handled by this Tag subclass instance
+     * Dispatches a DOMElement to be handled by this PHPSTLNSHandler subclass
      *
      * Given an element named <ns:method />, this will look for a method
      * "method" first, then "_method", if neither is found, if method begins
@@ -80,14 +79,14 @@ abstract class Tag
      * @return mixed usually void
      * @see PHPSTLCompiler::process
      */
-    public function __dispatch(DOMElement &$element)
+    public function __dispatch(DOMElement $element)
     {
         $method = substr(strstr($element->nodeName, ':'), 1);
 
         if (! method_exists($this, $method)) {
             if (! method_exists($this, "_$method")) {
                 throw new PHPSTLCompilerException($this->compiler,
-                    'Tag class '.get_class($this).
+                    __CLASS__.' class '.get_class($this).
                     ' unable to handle element '.$element->nodeName
                 );
             }
@@ -96,7 +95,7 @@ abstract class Tag
 
         if (
             substr($method, 0, 2) == '__' ||
-            in_array($method, get_class_methods('Tag'))
+            in_array($method, get_class_methods(__CLASS__))
         ) {
             throw new PHPSTLCompilerException($this->compiler,
                 "Won't call internal ".get_class($this).
@@ -115,7 +114,7 @@ abstract class Tag
      * @param boolean $quote true if the value should be quoted [default]
      * @return the attribute value for key $attr
      */
-    protected function requiredAttr(DOMElement &$element, $attr, $quote=true)
+    protected function requiredAttr(DOMElement $element, $attr, $quote=true)
     {
         if (!$element->hasAttribute($attr)) {
             throw new InvalidArgumentException(
@@ -138,7 +137,7 @@ abstract class Tag
      * @param mixed $default the default value
      * @return the attribute value for key $attr
      */
-    protected function getAttr(DOMElement &$element, $attr, $default=null)
+    protected function getAttr(DOMElement $element, $attr, $default=null)
     {
         if ($element->hasAttribute($attr)) {
             return $this->quote($element->getAttribute($attr));
@@ -155,13 +154,38 @@ abstract class Tag
      * @param mixed $default the default value
      * @return the attribute value for key $attr
      */
-    protected function getUnquotedAttr(DOMElement &$element, $attr, $default=null)
+    protected function getUnquotedAttr(DOMElement $element, $attr, $default=null)
     {
         if ($element->hasAttribute($attr)) {
             return $element->getAttribute($attr);
         } else {
             return $default;
         }
+    }
+
+    /**
+     * Get a boolean attribute from $element
+     *
+     * @param DOMElement $element the target element
+     * @param string $attr the attribute key
+     * @param mixed $default the default value
+     * @return boolean a value matching the users intent
+     */
+    protected function getBooleanAttr(DOMElement $element, $attr, $default=false)
+    {
+        if (!$element->hasAttribute($attr)) {
+            return $default;
+        }
+
+        $bool = $this->booleanValue($element->getAttribute($attr));
+
+        if (! isset($bool)) {
+            throw new InvalidArgumentException(
+                "Invalid boolean attribute $attr specified for $element->nodeName"
+            );
+        }
+
+        return $bool;
     }
 
     /**
@@ -188,62 +212,18 @@ abstract class Tag
     }
 
     /**
-     * Get a boolean attribute from $element
-     *
-     * @param DOMElement $element the target element
-     * @param string $attr the attribute key
-     * @param mixed $default the default value
-     * @return boolean a value matching the users intent
-     */
-    protected function getBooleanAttr(DOMElement &$element, $attr, $default=false)
-    {
-        if (!$element->hasAttribute($attr)) {
-            return $default;
-        }
-
-        $bool = $this->booleanValue($element->getAttribute($attr));
-
-        if (! isset($bool)) {
-            throw new InvalidArgumentException(
-                "Invalid boolean attribute $attr specified for $element->nodeName"
-            );
-        }
-
-        return $bool;
-    }
-
-    /**
      * Processes child elements
      *
      * @param DOMElement $element
      * @return void
      */
-    protected function process(DOMElement &$element)
+    protected function process(DOMElement $element)
     {
         if ($element->hasChildNodes()) {
             foreach($element->childNodes as $node) {
                 $this->compiler->process($node);
             }
         }
-    }
-
-    /**
-     * Quotes a subject if it's found to require one
-     *
-     * @param string $val The subject to quote (or not)
-     * @return string The quoted (or not) value
-     */
-    protected function quote($val)
-    {
-        if (! isset($val)) {
-            return null;
-        }
-
-        if ($this->needsQuote($val)) {
-            return "'".addslashes($val)."'";
-        }
-
-        return $val;
     }
 
     /**
@@ -310,7 +290,7 @@ abstract class Tag
      * @return string or array
      * @see getAttributeString
      */
-    protected function getAttributes(DOMElement &$element, $attrs, $asArray=false)
+    protected function getAttributes(DOMElement $element, $attrs, $asArray=false)
     {
         assert(is_array($attrs));
 
@@ -377,6 +357,25 @@ abstract class Tag
             $r .= " $attr=\"$value\"";
         }
         return $r;
+    }
+
+    /**
+     * Quotes a subject if it's found to require one
+     *
+     * @param string $val The subject to quote (or not)
+     * @return string The quoted (or not) value
+     */
+    protected function quote($val)
+    {
+        if (! isset($val)) {
+            return null;
+        }
+
+        if ($this->needsQuote($val)) {
+            return "'".addslashes($val)."'";
+        }
+
+        return $val;
     }
 
     /**
