@@ -85,6 +85,16 @@ class PHPSTLCompiler
     }
 
     /**
+     * Returns the DOMDocument currently being compiled
+     *
+     * @return DOMDocument or null
+     */
+    public function currentDOM()
+    {
+        return $this->dom;
+    }
+
+    /**
      * Returns the template currently being compiled
      *
      * @return string or null
