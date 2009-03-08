@@ -70,61 +70,109 @@ abstract class PHPSTLNSHandler
     }
 
     /**
-     * Dispatches a DOMAttr on the template documentElement to be handled by
-     * this PHPSTLNSHandler subclass
+     * Primary entry point from PHPSTLCompiler
+     *
+     * @param DOMNode $node
      */
-    public function __handleDocumentElementAttribute(DOMAttr $attr)
+    final public function handle(DOMNode $node)
     {
-        $method = '__docAttr'.ucfirst($attr->name);
-        if (! method_exists($this, $method)) {
-            throw new PHPSTLCompilerException($this->compiler,
-                "cannot handle $attr->prefix:$attr->name attribute on <".
-                $attr->parentNode->nodeName.'>'
+        assert(isset($node->namespaceURI));
+        assert($node->namespaceURI == $this->namespace);
+
+        switch ($node->nodeType) {
+        case XML_ATTRIBUTE_NODE:
+            if ($node->ownerElement === $node->ownerDocument->documentElement) {
+                return $this->handleDocumentAttribute($node);
+            } else {
+                return $this->handleAttribute($node);
+            }
+            break;
+        case XML_ELEMENT_NODE:
+            return $this->handleElement($node);
+            break;
+        default:
+            new PHPSTLCompilerException($this->compiler,
+                "Unsupported nodeType $node->nodeType ".
+                "for $node->prefix:$node->nodeName"
             );
         }
-        return $this->$method($attr);
     }
 
     /**
-     * Dispatches a DOMElement to be handled by this PHPSTLNSHandler subclass
+     * Calls a handler method for a node
      *
-     * Given an element named <ns:method />, this will look for a method
-     * "method" first, then "_method", if neither is found, if method begins
-     * with '__' or if the method is one defined direectly by the Tag class, a
-     * PHPSTLCompilerException is thrown.
-     *
-     * The return value of the handler method is passed through, this is
-     * typically void and doesn't matter.
-     *
-     * @param element DOMElement the element to handle
-     * @return mixed usually void
-     * @see PHPSTLCompiler::process
+     * @param string method
+     * @param DOMNode $node
+     * @return mixed whatever the handling method returns, if the caller cares
      */
-    public function __dispatch(DOMElement $element)
+    final protected function callHandleMethod($method, DOMNode $node)
     {
-        $method = substr(strstr($element->nodeName, ':'), 1);
-
         if (! method_exists($this, $method)) {
-            if (! method_exists($this, "_$method")) {
-                throw new PHPSTLCompilerException($this->compiler,
-                    __CLASS__.' class '.get_class($this).
-                    ' unable to handle element '.$element->nodeName
-                );
+            if ($node->nodeType == XML_ELEMENT_NODE) {
+                $what = "$node->nodeName";
+            } elseif ($node->nodeType == XML_ATTRIBUTE_NODE) {
+                $what = $node->ownerElement->nodeName."/@$node->nodeName";
+            } else {
+                $what = $node->nodeName;
             }
-            $method = "_$method";
-        }
-
-        if (
-            substr($method, 0, 2) == '__' ||
-            in_array($method, get_class_methods(__CLASS__))
-        ) {
+            $what .= ", xmlns:$node->prefix=\"$this->namespace\"";
+            while ($node->parentNode !== $node->ownerDocument) {
+                $node = $node->parentNode;
+                $what = $node->nodeName."/$what";
+            }
             throw new PHPSTLCompilerException($this->compiler,
-                "Won't call internal ".get_class($this).
-                " method for element ".$element->nodeName
+                "Cannot handle /$what, tried ".get_class($this)."->$method"
             );
         }
+        return $this->$method($node);
+    }
 
-        return $this->$method($element);
+    /**
+     * Handles an attribute on the document element
+     *
+     * Trys to call a method named handleDocumentAttrName
+     *
+     * @param DOMAttr $attr
+     * @return mixed whatever the handling method returns, if the caller cares
+     * @see callHandleMethod
+     */
+    protected function handleDocumentAttribute(DOMAttr $attr)
+    {
+        return $this->callHandleMethod(
+            'handleDocumentAttr'.ucfirst($attr->name), $attr
+        );
+    }
+
+    /**
+     * Handles an attribute
+     *
+     * Trys to call a method named handleAttrName
+     *
+     * @param DOMAttr $attr
+     * @return mixed whatever the handling method returns, if the caller cares
+     * @see callHandleMethod
+     */
+    protected function handleAttribute(DOMAttr $attr)
+    {
+        return $this->callHandleMethod(
+            'handleAttr'.ucfirst($attr->name), $attr
+        );
+    }
+
+    /**
+     * Handles an element
+     *
+     * Trys to call a method named handleElementName
+     *
+     * @param DOMElement $element
+     * @return mixed whatever the handling method returns, if the caller cares
+     * @see callHandleMethod
+     */
+    protected function handleElement(DOMElement $element)
+    {
+        return $this->callHandleMethod(
+            'handleElement'.ucfirst($element->localName), $element
+        );
     }
 
     /**

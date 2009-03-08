@@ -159,12 +159,12 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
      *
      * @param template string the template resource to extend
      */
-    public function _extends(DOMElement $element)
+    public function handleElementExtends(DOMElement $element)
     {
         $this->writeExtends($this->requiredAttr($element, 'template', false));
     }
 
-    public function __docAttrExtends(DOMAttr $attr)
+    public function handleDocumentAttrExtends(DOMAttr $attr)
     {
         $this->writeExtends($attr->value);
     }
@@ -185,7 +185,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
     /**
      * Defines a template extension
      */
-    public function _extension(DOMElement $element)
+    public function handleElementExtension(DOMElement $element)
     {
         $name = $this->requiredAttr($element, 'name');
         $this->compiler->write('<?php @ob_start(); ?>');
@@ -225,7 +225,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
      *   <!-- or provide a default instead of raising an error: -->
      *   <core:param name="when" type="int" default="@{time()}" />
      */
-    public function param(DOMElement $element)
+    public function handleElementParam(DOMElement $element)
     {
         $name = $this->requiredAttr($element, 'name', false);
         $type = $this->getUnquotedAttr($element, 'type', 'string');
@@ -290,7 +290,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
     /**
      * Opens a try { ... } catch { ... } block
      */
-    public function _try(DOMElement $element)
+    public function handleElementTry(DOMElement $element)
     {
         $this->compiler->write('<?php try { ?>');
         $this->process($element);
@@ -303,7 +303,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
      * @param type the type to catch, defaults to RuntimeException
      * @param var the variable to put the exception into, defaults to exception
      */
-    public function _catch(DOMElement $element)
+    public function handleElementCatch(DOMElement $element)
     {
         $class = $this->getUnquotedAttr($element, 'type', 'RuntimeException');
         $var = $this->getUnquotedAttr($element, 'var', 'exception');
@@ -316,7 +316,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
      * @param type the type of exception to throw, defaults to RuntimeException
      * @param message the message
      */
-    public function _throw(DOMElement $element)
+    public function handleElementThrow(DOMElement $element)
     {
         $class = $this->getUnquotedAttr($element, 'type', 'RuntimeException');
         $message = $this->requiredAttr($element, 'message');
@@ -329,7 +329,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
      * @param string test required - the condition to test
      * @param string var optional - if present, will store a boolean value to this variable
      */
-    public function _if(DOMElement $element)
+    public function handleElementIf(DOMElement $element)
     {
         $test = $this->requiredAttr($element, 'test', false);
         $var = $this->getUnquotedAttr($element, 'var', false);
@@ -346,7 +346,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
     /**
      * Represents an elseif condition, only works after a <core:if>
      */
-    public function _elseif(DOMElement $element)
+    public function handleElementElseif(DOMElement $element)
     {
         $test = $this->requiredAttr($element, 'test', false);
         $this->compiler->write("<?php } elseif ($test) { ?>");
@@ -356,7 +356,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
     /**
      * Represents an else condition - obviously only useful after a <core:if>
      */
-    public function _else(DOMElement $element)
+    public function handleElementElse(DOMElement $element)
     {
         $this->compiler->write('<?php } else { ?>');
         $this->process($element);
@@ -367,7 +367,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
      *
      * @param string test required - the variable to test
      */
-    public function _switch(DOMElement $element)
+    public function handleElementSwitch(DOMElement $element)
     {
         $test = $this->requiredAttr($element, 'test');
 
@@ -382,7 +382,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
      * @param string when required - the condition that must be met to reach the following code
      * @param string fallThrough optional - If true, will not add a break
      */
-    public function _case(DOMElement $element)
+    public function handleElementCase(DOMElement $element)
     {
         $test = $this->requiredAttr($element, 'when');
         $this->compiler->write("<?php case $test: ?>");
@@ -397,7 +397,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
      *
      * @param string fallThrough optional - If true, will not add a break
      */
-    public function _default(DOMElement $element)
+    public function handleElementDefault(DOMElement $element)
     {
         $this->compiler->write('<?php default: ?>');
         $this->process($element);
@@ -412,7 +412,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
      * @param string list required - a list to process
      * @param string var required - the name of the locally scoped variable
      */
-    public function _forEach(DOMElement $element)
+    public function handleElementForEach(DOMElement $element)
     {
         $list = $this->requiredAttr($element, 'list');
         $var = $this->requiredAttr($element, 'var', false);
@@ -439,7 +439,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
     /**
      * Writes a continue statement for loop processing
      */
-    public function _continue(DOMElement $element)
+    public function handleElementContinue(DOMElement $element)
     {
         $this->compiler->write('<?php continue; ?>');
     }
@@ -447,7 +447,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
     /**
      * Writes a break statement for loop processing
      */
-    public function _break(DOMElement $element)
+    public function handleElementBreak(DOMElement $element)
     {
         $this->compiler->write('<?php break; ?>');
     }
@@ -459,7 +459,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
      * @param int to required - the integer to end on (the condition)
      * @param string var optional - the index variable to assign. default is i
      */
-    public function _for(DOMElement $element)
+    public function handleElementFor(DOMElement $element)
     {
         $from = $this->requiredAttr($element, 'from', false);
         $to = $this->requiredAttr($element, 'to', false);
@@ -476,7 +476,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
      * @param string value required - the value to set
      * @param string var required - the name of the variable to set
      */
-    public function set(DOMElement $element)
+    public function handleElementSet(DOMElement $element)
     {
         $value = $this->requiredAttr($element, 'value');
         $var = $this->requiredAttr($element, 'var', false);
@@ -519,7 +519,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
      *                 "boolean" => formats as Yes or No
      *                 "date:xxx" => formats as date, where xxx is the format string used by date()
      */
-    public function out(DOMElement $element)
+    public function handleElementOut(DOMElement $element)
     {
         $value = $this->requiredAttr($element, 'value');
         $escapeXml = $this->getBooleanAttr($element, 'escapeXml', true);
@@ -567,7 +567,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
      *
      * @see PHPSTLCoreHandler::BuildXMLHeader
      */
-    public function xmlHeader(DOMElement $element)
+    public function handleElementXmlHeader(DOMElement $element)
     {
         $this->compiler->write(
             "<?php echo PHPSTLCoreHandler::BuildXMLHeader(".$this->argList(array(
@@ -588,7 +588,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
      * See PHPSTLCoreHandler::$Doctypes for shortcut ids
      * @see PHPSTLCoreHandler::BuildDoctype, PHPSTLCoreHandler::$Doctypes
      */
-    public function doctype(DOMElement $element)
+    public function handleElementDoctype(DOMElement $element)
     {
         if ($element->hasAttribute('type')) {
             // Old style
@@ -615,7 +615,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
      * @param object the object you wish to convert
      * @param var an optional variable name to output to
      */
-    public function json(DOMElement $element)
+    public function handleElementJson(DOMElement $element)
     {
         $object = $this->requiredAttr($element, 'object');
         $var = $this->getUnquotedAttr($element, 'var');
@@ -635,7 +635,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
      * @param simple boolean default false, if true don't process the
      * <core:cdata /> children, simpley output its textContent
      */
-    public function cdata(DOMElement $element)
+    public function handleElementCdata(DOMElement $element)
     {
         if ($this->getBooleanAttr($element, 'simple', false)) {
             $this->compiler->write('<![CDATA['.$element->textContent.']]>');
@@ -653,7 +653,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
      * @param object var the variable to dump
      * @param boolean pre set to false to not include the <pre> wrap
      */
-    public function dump(DOMElement $element)
+    public function handleElementDump(DOMElement $element)
     {
         $object = $this->requiredAttr($element, 'var', false);
         $pre = $this->getBooleanAttr($element, 'pre', true);
@@ -677,7 +677,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
      * Processes another template
      * @param resource the template resource to process
      */
-    public function render(DOMElement $element)
+    public function handleElementRender(DOMElement $element)
     {
         $res = $this->requiredAttr($element, 'resource');
         $args = array();

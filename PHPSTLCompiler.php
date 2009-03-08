@@ -176,7 +176,7 @@ class PHPSTLCompiler
         case XML_ELEMENT_NODE:
             if (isset($node->namespaceURI)) {
                 $handler = $this->handleNamespace($node->namespaceURI);
-                $handler->__dispatch($node);
+                $handler->handle($node);
                 return;
             }
 
@@ -351,7 +351,7 @@ class PHPSTLCompiler
             foreach ($this->dom->documentElement->attributes as $name => $node) {
                 if (isset($node->namespaceURI)) {
                     $handler = $this->handleNamespace($node->namespaceURI);
-                    $handler->__handleDocumentElementAttribute($node);
+                    $handler->handle($node);
                 }
             }
             foreach ($this->dom->documentElement->childNodes as $node) {
