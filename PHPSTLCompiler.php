@@ -137,53 +137,51 @@ class PHPSTLCompiler
     /**
      * The main compilation function - called recursivley to process
      *
-     * @param DOMNode $currentNode
+     * @param DOMNode $node
      * @return void
      */
-    public function process(DOMNode $currentNode)
+    public function process(DOMNode $node)
     {
-        if ($currentNode->nodeType == XML_COMMENT_NODE) {
-            return;
-        }
-
-        if (
-            $currentNode->nodeType == XML_TEXT_NODE ||
-            $currentNode->nodeType == XML_CDATA_SECTION_NODE
-        ) {
-            $this->write($currentNode->nodeValue);
-            return;
-        }
-
-        // There's a handler for this node
-        if ($handler = $this->getHandler($currentNode)) {
-            $handler->__dispatch($currentNode);
-            return;
-        }
-
-        $this->write("<$currentNode->nodeName");
-
-        if ($currentNode->hasAttributes()) {
-            foreach ($currentNode->attributes as $attr) {
-                $this->write(' ' . $attr->name . '="' . $attr->value . '"');
-            }
-        }
-
-        // make some exceptions for weirdo tags...
-        if (
-            $currentNode->hasChildNodes() ||
-            in_array($currentNode->nodeName, array(
-                'meta', 'link', 'br', 'hr', 'img', 'input'
-            ))
-        ) {
-            $this->write('>');
-
-            foreach ($currentNode->childNodes as $child) {
-                $this->process($child);
+        switch ($node->nodeType) {
+        case XML_COMMENT_NODE:
+            break;
+        case XML_TEXT_NODE:
+        case XML_CDATA_SECTION_NODE:
+            $this->write($node->nodeValue);
+            break;
+        case XML_ELEMENT_NODE:
+            // There's a handler for this node
+            if ($handler = $this->getHandler($node)) {
+                $handler->__dispatch($node);
+                return;
             }
 
-            $this->write("</$currentNode->nodeName>");
-        } else {
-            $this->write(' />');
+            $this->write("<$node->nodeName");
+
+            if ($node->hasAttributes()) {
+                foreach ($node->attributes as $attr) {
+                    $this->write(' ' . $attr->name . '="' . $attr->value . '"');
+                }
+            }
+
+            // make some exceptions for weirdo tags...
+            if (
+                $node->hasChildNodes() ||
+                in_array($node->nodeName, array(
+                    'meta', 'link', 'br', 'hr', 'img', 'input'
+                ))
+            ) {
+                $this->write('>');
+
+                foreach ($node->childNodes as $child) {
+                    $this->process($child);
+                }
+
+                $this->write("</$node->nodeName>");
+            } else {
+                $this->write(' />');
+            }
+            break;
         }
     }
 
