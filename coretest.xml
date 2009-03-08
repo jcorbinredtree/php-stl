@@ -1,6 +1,6 @@
 <template
   xmlns:core="class://CoreTag"
-  core:extends="coretestext.xml">
+  core:extends="coretestext">
 
 <core:param name="when" type="int" default="@{time()}" />
 <ul>

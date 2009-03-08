@@ -11,11 +11,10 @@ $pstl = new PHPSTL(array(
   'always_compile' => true
 ));
 
-
 // $t->getPHPSTLCompiler()->setCaching(false);
 // TODO test abs
 
-$coretest = $pstl->load('coretest.xml');
+$coretest = $pstl->load('coretest');
 print "CoreTag Test:\n";
 $out = $coretest->render();
 $a = explode("\n", $out);
