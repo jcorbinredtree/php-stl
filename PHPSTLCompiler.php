@@ -230,32 +230,37 @@ class PHPSTLCompiler
      */
     private function getHandler($node)
     {
-        $matches = array();
-
-        if (! preg_match('|^class://(.+)|', $node->namespaceURI, $matches)) {
+        $namespace = $node->namespaceURI;
+        if (! isset($namespace)) {
             return null;
         }
-        $class = $matches[1];
-
-        if (! isset($this->handler[$class])) {
-            if (! class_exists($class) && function_exists('__autoload')) {
-                __autoload($class);
+        if (! isset($this->handler[$namespace])) {
+            if (
+                strlen($namespace) > 8 &&
+                substr($namespace, 0, 8) == 'class://'
+            ) {
+                $class = substr($namespace, 8);
+                if (! class_exists($class)) {
+                    if (function_exists('__autoload')) {
+                        __autoload($class);
+                    }
+                    if (! class_exists($class)) {
+                        throw new PHPSTLCompilerException($this,
+                            "No such Tag class $class for $namespace"
+                        );
+                    }
+                }
+                if (! is_subclass_of($class, 'Tag')) {
+                    throw new PHPSTLCompilerException($this,
+                        "$class is not a subclass of Tag for $namespace"
+                    );
+                }
+                $this->handler[$namespace] = new $class($this);
+            } else {
+                return null;
             }
-            if (! class_exists($class)) {
-                throw new PHPSTLCompilerException($this,
-                    "No such Tag class $class for $node->namespaceURI"
-                );
-            }
-
-            if (! is_subclass_of($class, 'Tag')) {
-                throw new PHPSTLCompilerException($this,
-                    "$class is not a subclass of Tag for $node->namespaceURI"
-                );
-            }
-
-            $this->handler[$class] = new $class($this);
         }
-        return $this->handler[$class];
+        return $this->handler[$namespace];
     }
 
     /**
