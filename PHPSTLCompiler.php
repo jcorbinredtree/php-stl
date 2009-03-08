@@ -68,11 +68,11 @@ class PHPSTLCompiler
     protected $template=null;
 
     /**
-     * Our map of classes which are being handled by xmlns's
+     * Map of namespaceURIs to PHPSTLNSHandler objects
      *
      * @var array
      */
-    private $handlerMap = array();
+    private $handlers=null;
 
     /**
      * Constructor
@@ -165,8 +165,8 @@ class PHPSTLCompiler
             }
             break;
         case XML_ELEMENT_NODE:
-            // There's a handler for this node
-            if ($handler = $this->getHandler($node)) {
+            if (isset($node->namespaceURI)) {
+                $handler = $this->handleNamespace($node->namespaceURI);
                 $handler->__dispatch($node);
                 return;
             }
@@ -223,18 +223,19 @@ class PHPSTLCompiler
     }
 
     /**
-     * Gets the class that will be used to handle $uri
+     * Returns a handler for a namspace, or throws a PHPSTLCompilerException
+     * if we can't handle it
      *
      * @param DOMNode $node
      * @return Tag an instance of Tag to be used to process this tag
      */
-    private function getHandler($node)
+    protected function handleNamespace($namespace)
     {
-        $namespace = $node->namespaceURI;
-        if (! isset($namespace)) {
-            return null;
+        if (! isset($this->handlers)) {
+            throw new RuntimeException('not compiling any document right now');
         }
-        if (! isset($this->handler[$namespace])) {
+
+        if (! isset($this->handlers[$namespace])) {
             if (
                 strlen($namespace) > 8 &&
                 substr($namespace, 0, 8) == 'class://'
@@ -255,12 +256,14 @@ class PHPSTLCompiler
                         "$class is not a subclass of Tag for $namespace"
                     );
                 }
-                $this->handler[$namespace] = new $class($this);
+                $this->handlers[$namespace] = new $class($this);
             } else {
-                return null;
+                throw new PHPSTLCompilerException($this,
+                    "Cannot handle namespace $namespace"
+                );
             }
         }
-        return $this->handler[$namespace];
+        return $this->handlers[$namespace];
     }
 
     /**
@@ -344,6 +347,7 @@ class PHPSTLCompiler
         try {
             $this->buffer = '';
             $this->footerBuffer = '';
+            $this->handlers = array();
             $this->dom = new DOMDocument();
             $this->dom->preserveWhiteSpace = true;
 
@@ -355,7 +359,8 @@ class PHPSTLCompiler
 
             $this->writeTemplateHeader();
             foreach ($this->dom->documentElement->attributes as $name => $node) {
-                if ($handler = $this->getHandler($node)) {
+                if (isset($node->namespaceURI)) {
+                    $handler = $this->handleNamespace($node->namespaceURI);
                     $handler->__handleDocumentElementAttribute($node);
                 }
             }
@@ -396,6 +401,7 @@ class PHPSTLCompiler
         $this->buffer = null;
         $this->footerBuffer = null;
         $this->dom = null;
+        $this->handlers = null;
     }
 }
 
