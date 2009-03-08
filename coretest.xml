@@ -70,7 +70,7 @@
 
 <p>An hour ago:
   <core:set var="testVal" value="@{time()-3600}" />
-  <core:out value="${testVal}" format="date:%c" />
+  <core:out value="${testVal}" format="date:c" />
 </p>
 
 <p>Int:

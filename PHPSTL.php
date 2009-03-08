@@ -15,9 +15,6 @@
  *
  * The Original Code is Red Tree Systems Code.
  *
- * The Initial Developer of the Original Code is
- * Brandon Prudent <php-stl@redtreesystems.com>. All Rights Reserved.
- *
  * @author       Red Tree Systems, LLC <support@redtreesystems.com>
  * @copyright    2007 Red Tree Systems, LLC
  * @license      MPL 1.1
@@ -25,13 +22,13 @@
  * @link         http://php-stl.redtreesystems.com
  */
 
-require_once(dirname(__FILE__).'/PHPSTLTemplate.php');
-require_once(dirname(__FILE__).'/PHPSTLTemplateCache.php');
-require_once(dirname(__FILE__).'/PHPSTLDiskCache.php');
-require_once(dirname(__FILE__).'/PHPSTLCompiler.php');
-require_once(dirname(__FILE__).'/PHPSTLTemplateProvider.php');
-require_once(dirname(__FILE__).'/PHPSTLFileBackedProvider.php');
-require_once(dirname(__FILE__).'/PHPSTLDirectoryProvider.php');
+require_once dirname(__FILE__).'/PHPSTLTemplate.php';
+require_once dirname(__FILE__).'/PHPSTLTemplateCache.php';
+require_once dirname(__FILE__).'/PHPSTLDiskCache.php';
+require_once dirname(__FILE__).'/PHPSTLCompiler.php';
+require_once dirname(__FILE__).'/PHPSTLTemplateProvider.php';
+require_once dirname(__FILE__).'/PHPSTLFileBackedProvider.php';
+require_once dirname(__FILE__).'/PHPSTLDirectoryProvider.php';
 
 /**
  * The primary interface to PHP-STL, manages all the other parts

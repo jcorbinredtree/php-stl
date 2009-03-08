@@ -15,9 +15,6 @@
  *
  * The Original Code is Red Tree Systems Code.
  *
- * The Initial Developer of the Original Code is
- * Brandon Prudent <php-stl@redtreesystems.com>. All Rights Reserved.
- *
  * @category     Tag
  * @author       Red Tree Systems, LLC <php-stl@redtreesystems.com>
  * @copyright    2007 Red Tree Systems, LLC
@@ -270,8 +267,10 @@ abstract class Tag
      * quote things.
      *
      * @param args array the array list
+     *
      * @param pruneTail boolean default true, if true drops trailing nulls
      * from the arg list
+     *
      * @return string
      */
     protected function argList($args, $pruneTail=true)
@@ -298,13 +297,16 @@ abstract class Tag
      * attributes to be emited "normally" rathre than in the html way.
      *
      * @param element DOMElement the element
+     *
      * @param attrs array array of attribute names to process; can
      * also contain named key => value pairs specifying default values in
      * case the element lacks an attribute; ordinal elements are equivalent to
      * specifying name => null
+     *
      * @param asArray boolean optional, default false, if true return an
      * associative array of collected values, otherwise returns a string
      * like ' attr="val" attr="val"'
+     *
      * @return string or array
      * @see getAttributeString
      */
@@ -347,9 +349,11 @@ abstract class Tag
      * Returns a tag attribute string like ' name="val" name="val"' from an
      * associative array.
      *
-     * @param attrs array
-     * @param htmlBoolean boolean if true, boolean values will be output as
+     * @param array $attrs
+     *
+     * @param boolean $htmlBoolean if true, boolean values will be output as
      * ' name="name"' if true or '' if false
+     *
      * @return string
      */
     protected function getAttributeString($attrs, $htmlBoolean=true)

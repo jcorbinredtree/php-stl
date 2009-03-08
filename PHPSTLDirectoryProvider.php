@@ -15,9 +15,6 @@
  *
  * The Original Code is Red Tree Systems Code.
  *
- * The Initial Developer of the Original Code is
- * Brandon Prudent <php-stl@redtreesystems.com>. All Rights Reserved.
- *
  * @author       Red Tree Systems, LLC <support@redtreesystems.com>
  * @copyright    2007 Red Tree Systems, LLC
  * @license      MPL 1.1
