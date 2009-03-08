@@ -37,7 +37,7 @@
   </core:forEach>
 </ul>
 
-<core:php><![CDATA[
+<?php
   $dumpTest = array(
     'deep' => array(
       'a' => 'alpha',
@@ -46,7 +46,7 @@
       ),
     'another' => 'one'
   );
-]]></core:php>
+?>
 
 <p>Dump: <core:dump var="${dumpTest}" /></p>
 <p>JSON: <core:json object="${dumpTest}" /></p>

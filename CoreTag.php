@@ -633,14 +633,6 @@ class CoreTag extends Tag
     }
 
     /**
-     * Adds a php block - use sparingly
-     */
-    public function php(DOMElement &$element)
-    {
-        $this->compiler->write('<?php '.$element->textContent.'; ?>');
-    }
-
-    /**
      * Writes a CDATA block to the output
      *
      * @param simple boolean default false, if true don't process the

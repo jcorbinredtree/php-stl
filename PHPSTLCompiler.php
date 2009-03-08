@@ -149,6 +149,21 @@ class PHPSTLCompiler
         case XML_CDATA_SECTION_NODE:
             $this->write($node->nodeValue);
             break;
+        case XML_PI_NODE:
+            switch ($node->target) {
+            case 'php':
+                $data = trim($node->data);
+                if (! preg_match('/[:;}]$/', $data)) {
+                    $data .= ';';
+                }
+                $this->write("<?php $data ?>");
+                break;
+            default:
+                throw new PHPSTLCompilerException($this,
+                    "unknown processing instruction $node->target"
+                );
+            }
+            break;
         case XML_ELEMENT_NODE:
             // There's a handler for this node
             if ($handler = $this->getHandler($node)) {
