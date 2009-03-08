@@ -23,7 +23,6 @@
  */
 
 require_once dirname(__FILE__).'/PHPSTLNSHandler.php';
-require_once dirname(__FILE__).'/CoreTag.php';
 
 /**
  * PHPSTLCompiler
@@ -247,32 +246,12 @@ class PHPSTLCompiler
         }
 
         if (! isset($this->handlers[$namespace])) {
-            if (
-                strlen($namespace) > 8 &&
-                substr($namespace, 0, 8) == 'class://'
-            ) {
-                $class = substr($namespace, 8);
-                if (! class_exists($class)) {
-                    if (function_exists('__autoload')) {
-                        __autoload($class);
-                    }
-                    if (! class_exists($class)) {
-                        throw new PHPSTLCompilerException($this,
-                            "No such PHPSTLNSHandler class $class for $namespace"
-                        );
-                    }
-                }
-                if (! is_subclass_of($class, 'PHPSTLNSHandler')) {
-                    throw new PHPSTLCompilerException($this,
-                        "$class is not a subclass of PHPSTLNSHandler for $namespace"
-                    );
-                }
-                $this->handlers[$namespace] = new $class($this);
-            } else {
-                throw new PHPSTLCompilerException($this,
-                    "Cannot handle namespace $namespace"
-                );
+            try {
+                $class = PHPSTL::getNamespaceHandler($namespace);
+            } catch (InvalidArgumentException $e) {
+                throw new PHPSTLCompilerException($this, $e->getMessage());
             }
+            $this->handlers[$namespace] = new $class($this, $namespace);
         }
         return $this->handlers[$namespace];
     }

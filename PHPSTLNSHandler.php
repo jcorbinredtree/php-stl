@@ -33,11 +33,23 @@ abstract class PHPSTLNSHandler
     protected $compiler;
 
     /**
-     * @param PHPSTLCompiler $compiler
+     * @var string
      */
-    public function __construct(PHPSTLCompiler $compiler)
-    {
+    protected $namespace;
+
+    /**
+     * @param PHPSTLCompiler $compiler
+     * @param string $namespace
+     */
+    public function __construct(PHPSTLCompiler $compiler, $namespace) {
+        assert(is_string($namespace));
         $this->compiler = $compiler;
+        $this->namespace = $namespace;
+    }
+
+    public function __tostring()
+    {
+        return "[$this->namespace handler]";
     }
 
     /**
@@ -46,6 +58,15 @@ abstract class PHPSTLNSHandler
     public function getCompiler()
     {
         return $this->compiler;
+    }
+
+    /**
+     * @see $namespace
+     * @return string
+     */
+    public function getNamespace()
+    {
+        return $this->namespace;
     }
 
     /**

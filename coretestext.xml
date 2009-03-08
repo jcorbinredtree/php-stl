@@ -1,4 +1,4 @@
-<template xmlns:core="class://CoreTag">
+<template xmlns:core="urn:redtree:php-stl:core:v2.0">
 <core:param name="left" />
 <core:param name="right" />
 <core:param name="content" />

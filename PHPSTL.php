@@ -36,6 +36,119 @@ require_once dirname(__FILE__).'/PHPSTLDirectoryProvider.php';
 class PHPSTL
 {
     /**
+     * Registers a namespace handler
+     *
+     * @param string $uri the namespace uri to register, can be anything however
+     * a string like "urn:organization:project:task:version" would by typical;
+     * for example, the PHP-STL core namspace handler is registered as
+     * "urn:redtree:php-stl:core:v2.0"
+     *
+     * @param mixed $class a string class name that will be instantiated to
+     * handle the namespace; or if and only if $load is a callable, this may be
+     * null, in which case the callable must return a string class name
+     *
+     * @param mixed $load how to load the class this can be:
+     *   null     - no loading mechanism, the class will be checked to exist
+     *              when registerNamespace is called
+     *   string   - a path to a php file to require_once() the first time a
+     *              template is compiled that uses the namespace
+     *   callable - a callback to be called the first time a template is
+     *              compiled that uses the namespace; the callback will be passed
+     *              the namespace uri and class name that were given to
+     *              registerNamespace and should return either null or a string
+     *              class name to replace the specified class name
+     *
+     * @return void
+     * @see PHPSTLNSHandler
+     */
+    static public function registerNamespace($uri, $class, $load)
+    {
+        // URI must be a string
+        assert(is_string($uri));
+
+        // Class must be null or a string
+        assert(! isset($class) || is_string($class));
+
+        // Load must be null, a string, or a callable
+        assert(! isset($load) || is_string($load) || is_callable($load));
+
+        // Class must be set, or the loader must be a callback
+        assert(isset($class) || is_callable($load));
+
+        // If no loading mechanism, the class must be loaded now and derived
+        // from PHPSTLNSHandler
+        assert(isset($load) || (
+            class_exists($class) &&
+            is_subclass_of($class, 'PHPSTLNSHandler')
+        ));
+
+        self::$namespaces[$uri] = array($class, $load);
+    }
+
+    /**
+     * Returns a handler class name for a given uri
+     *
+     * @param string $uri
+     * @return string class derived from PHPSTLNSHandler
+     * @see PHPSTLNSHandler, registerNamespace
+     */
+    static public function getNamespaceHandler($uri)
+    {
+        if (! array_key_exists($uri, self::$namespaces)) {
+            $mess = "unregisterd namespace $uri";
+
+            if (preg_match('/^class:\/\//', $uri)) {
+                $mess .= "\n".
+                    "Old style class:// format, you should choose a proper ".
+                    "namespace and register it with PHP-STL";
+            }
+            throw new InvalidArgumentException(
+                "$mess\nSee PHPSTL::registerNamespace for details"
+            );
+        }
+
+        list($class, $load) = self::$namespaces[$uri];
+
+        if (isset($load)) {
+            if (is_callable($load)) {
+                $r = call_user_func($load, $uri, $class);
+                if (isset($r)) {
+                    if (! is_string($r)) {
+                        throw new RuntimeException(
+                            'load callback should return a string'
+                        );
+                    }
+                    $class = $r;
+                }
+            } else {
+                require_once $load;
+            }
+            if (! class_exists($class)) {
+                throw new RuntimeException(
+                    "namespace handling class $class doesn't exist"
+                );
+            }
+            if (! is_subclass_of($class, 'PHPSTLNSHandler')) {
+                throw new RuntimeException(
+                    "$class must be derived from PHPSTLNSHandler"
+                );
+            }
+
+            self::$namespaces[$uri] = array($class, null);
+        }
+
+        return $class;
+    }
+
+    /**
+     * Namespace handler registry
+     *
+     * @var array
+     * @see PHPSTLNSHandler, PHPSTL::registerNamespace
+     */
+    static private $namespaces = array();
+
+    /**
      * The compiler used to compile templates
      *
      * @var PHPSTLCompiler
@@ -298,5 +411,11 @@ class PHPSTLNoSuchResource extends RuntimeException
         parent::__construct("No such template $resource");
     }
 }
+
+PHPSTL::registerNamespace(
+    'urn:redtree:php-stl:core:v2.0',
+    'PHPSTLCoreHandler',
+    dirname(__FILE__).'/PHPSTLCoreHandler.php'
+);
 
 ?>

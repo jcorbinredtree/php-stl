@@ -1,7 +1,7 @@
 <?php
 
 /**
- * CoreTag class definition
+ * PHPSTLCoreHandler class definition
  *
  * PHP version 5
  *
@@ -22,17 +22,17 @@
  * @link         http://php-stl.redtreesystems.com
  */
 
-require_once(dirname(__FILE__).'/PHPSTLLoopIterator.php');
+require_once dirname(__FILE__).'/PHPSTLLoopIterator.php';
 
 /**
- * CoreTag
+ * PHPSTLCoreHandler
  *
  * This class provides core tag functionality
  */
-class CoreTag extends PHPSTLNSHandler
+class PHPSTLCoreHandler extends PHPSTLNSHandler
 {
     /**
-     * Static function call setup by CoreTag::xmlHeader
+     * Static function call setup by PHPSTLCoreHandler::xmlHeader
      */
     public static function BuildXMLHeader($ver='1.0', $enc='utf-8')
     {
@@ -64,7 +64,7 @@ class CoreTag extends PHPSTLNSHandler
         )
     );
     /**
-     * Static function call setup by CoreTag::doctype
+     * Static function call setup by PHPSTLCoreHandler::doctype
      */
     static public function BuildDoctype($id, $root=null, $access=null, $url=null)
     {
@@ -94,17 +94,17 @@ class CoreTag extends PHPSTLNSHandler
     }
 
     static $extData = array();
-    private static function hasExtensionData(PHPSTLTemplate &$template)
+    private static function hasExtensionData(PHPSTLTemplate $template)
     {
         return property_exists($template, '__coreTagExtensionId');
     }
 
-    private static function &extensionData(PHPSTLTemplate &$template)
+    private static function &extensionData(PHPSTLTemplate $template)
     {
         return self::$extData[$template->__coreTagExtensionId];
     }
 
-    public static function closeExtension(PHPSTLTemplate &$template, $name, $buffer)
+    public static function closeExtension(PHPSTLTemplate $template, $name, $buffer)
     {
         if (! self::hasExtensionData($template)) {
             throw new RuntimeException('no template extension data available');
@@ -117,7 +117,7 @@ class CoreTag extends PHPSTLNSHandler
         }
     }
 
-    public static function startExtends(PHPSTLTemplate &$template)
+    public static function startExtends(PHPSTLTemplate $template)
     {
         if (self::hasExtensionData($template)) {
             throw new RuntimeException(
@@ -132,7 +132,7 @@ class CoreTag extends PHPSTLNSHandler
         @ob_start();
     }
 
-    public static function finishExtends(PHPSTLTemplate &$template, $extended)
+    public static function finishExtends(PHPSTLTemplate $template, $extended)
     {
         self::closeExtension($template, 'content', @ob_get_clean());
         $pstl = $template->getProvider()->getPHPSTL();
@@ -159,12 +159,12 @@ class CoreTag extends PHPSTLNSHandler
      *
      * @param template string the template resource to extend
      */
-    public function _extends(DOMElement &$element)
+    public function _extends(DOMElement $element)
     {
         $this->writeExtends($this->requiredAttr($element, 'template', false));
     }
 
-    public function __docAttrExtends(DOMAttr &$attr)
+    public function __docAttrExtends(DOMAttr $attr)
     {
         $this->writeExtends($attr->value);
     }
@@ -175,26 +175,26 @@ class CoreTag extends PHPSTLNSHandler
             $template = $this->quote($template);
         }
         $this->compiler->write(
-            '<?php CoreTag::startExtends($this); ?>'
+            '<?php PHPSTLCoreHandler::startExtends($this); ?>'
         );
         $this->compiler->writeFooter(
-            "<?php CoreTag::finishExtends(\$this, $template); ?>"
+            "<?php PHPSTLCoreHandler::finishExtends(\$this, $template); ?>"
         );
     }
 
     /**
      * Defines a template extension
      */
-    public function _extension(DOMElement &$element)
+    public function _extension(DOMElement $element)
     {
         $name = $this->requiredAttr($element, 'name');
         $this->compiler->write('<?php @ob_start(); ?>');
         $this->process($element);
-        $this->compiler->write("<?php CoreTag::closeExtension(\$this, $name, @ob_get_clean()); ?>");
+        $this->compiler->write("<?php PHPSTLCoreHandler::closeExtension(\$this, $name, @ob_get_clean()); ?>");
     }
 
     static $ParamNoValue;
-    public static function initParam(PHPSTLTemplate &$template, $name, $required)
+    public static function initParam(PHPSTLTemplate $template, $name, $required)
     {
         if (! isset(self::$ParamNoValue)) {
             self::$ParamNoValue = new stdClass();
@@ -225,7 +225,7 @@ class CoreTag extends PHPSTLNSHandler
      *   <!-- or provide a default instead of raising an error: -->
      *   <core:param name="when" type="int" default="@{time()}" />
      */
-    public function param(DOMElement &$element)
+    public function param(DOMElement $element)
     {
         $name = $this->requiredAttr($element, 'name', false);
         $type = $this->getUnquotedAttr($element, 'type', 'string');
@@ -278,8 +278,8 @@ class CoreTag extends PHPSTLNSHandler
         }
         $cast = $builtin ? "($type) " : '';
         $this->compiler->write(
-            "<?php $var = CoreTag::initParam(\$this, $name, $required);\n".
-            "if ($var === CoreTag::\$ParamNoValue) {\n".
+            "<?php $var = PHPSTLCoreHandler::initParam(\$this, $name, $required);\n".
+            "if ($var === PHPSTLCoreHandler::\$ParamNoValue) {\n".
             "  $var = $cast$default;\n".
             "} else {\n".
             "  $var = $cast$var;\n".
@@ -290,7 +290,7 @@ class CoreTag extends PHPSTLNSHandler
     /**
      * Opens a try { ... } catch { ... } block
      */
-    public function _try(DOMElement &$element)
+    public function _try(DOMElement $element)
     {
         $this->compiler->write('<?php try { ?>');
         $this->process($element);
@@ -303,7 +303,7 @@ class CoreTag extends PHPSTLNSHandler
      * @param type the type to catch, defaults to RuntimeException
      * @param var the variable to put the exception into, defaults to exception
      */
-    public function _catch(DOMElement &$element)
+    public function _catch(DOMElement $element)
     {
         $class = $this->getUnquotedAttr($element, 'type', 'RuntimeException');
         $var = $this->getUnquotedAttr($element, 'var', 'exception');
@@ -316,7 +316,7 @@ class CoreTag extends PHPSTLNSHandler
      * @param type the type of exception to throw, defaults to RuntimeException
      * @param message the message
      */
-    public function _throw(DOMElement &$element)
+    public function _throw(DOMElement $element)
     {
         $class = $this->getUnquotedAttr($element, 'type', 'RuntimeException');
         $message = $this->requiredAttr($element, 'message');
@@ -329,7 +329,7 @@ class CoreTag extends PHPSTLNSHandler
      * @param string test required - the condition to test
      * @param string var optional - if present, will store a boolean value to this variable
      */
-    public function _if(DOMElement &$element)
+    public function _if(DOMElement $element)
     {
         $test = $this->requiredAttr($element, 'test', false);
         $var = $this->getUnquotedAttr($element, 'var', false);
@@ -346,7 +346,7 @@ class CoreTag extends PHPSTLNSHandler
     /**
      * Represents an elseif condition, only works after a <core:if>
      */
-    public function _elseif(DOMElement &$element)
+    public function _elseif(DOMElement $element)
     {
         $test = $this->requiredAttr($element, 'test', false);
         $this->compiler->write("<?php } elseif ($test) { ?>");
@@ -356,7 +356,7 @@ class CoreTag extends PHPSTLNSHandler
     /**
      * Represents an else condition - obviously only useful after a <core:if>
      */
-    public function _else(DOMElement &$element)
+    public function _else(DOMElement $element)
     {
         $this->compiler->write('<?php } else { ?>');
         $this->process($element);
@@ -367,7 +367,7 @@ class CoreTag extends PHPSTLNSHandler
      *
      * @param string test required - the variable to test
      */
-    public function _switch(DOMElement &$element)
+    public function _switch(DOMElement $element)
     {
         $test = $this->requiredAttr($element, 'test');
 
@@ -382,7 +382,7 @@ class CoreTag extends PHPSTLNSHandler
      * @param string when required - the condition that must be met to reach the following code
      * @param string fallThrough optional - If true, will not add a break
      */
-    public function _case(DOMElement &$element)
+    public function _case(DOMElement $element)
     {
         $test = $this->requiredAttr($element, 'when');
         $this->compiler->write("<?php case $test: ?>");
@@ -397,7 +397,7 @@ class CoreTag extends PHPSTLNSHandler
      *
      * @param string fallThrough optional - If true, will not add a break
      */
-    public function _default(DOMElement &$element)
+    public function _default(DOMElement $element)
     {
         $this->compiler->write('<?php default: ?>');
         $this->process($element);
@@ -412,7 +412,7 @@ class CoreTag extends PHPSTLNSHandler
      * @param string list required - a list to process
      * @param string var required - the name of the locally scoped variable
      */
-    public function _forEach(DOMElement &$element)
+    public function _forEach(DOMElement $element)
     {
         $list = $this->requiredAttr($element, 'list');
         $var = $this->requiredAttr($element, 'var', false);
@@ -439,7 +439,7 @@ class CoreTag extends PHPSTLNSHandler
     /**
      * Writes a continue statement for loop processing
      */
-    public function _continue(DOMElement &$element)
+    public function _continue(DOMElement $element)
     {
         $this->compiler->write('<?php continue; ?>');
     }
@@ -447,7 +447,7 @@ class CoreTag extends PHPSTLNSHandler
     /**
      * Writes a break statement for loop processing
      */
-    public function _break(DOMElement &$element)
+    public function _break(DOMElement $element)
     {
         $this->compiler->write('<?php break; ?>');
     }
@@ -459,7 +459,7 @@ class CoreTag extends PHPSTLNSHandler
      * @param int to required - the integer to end on (the condition)
      * @param string var optional - the index variable to assign. default is i
      */
-    public function _for(DOMElement &$element)
+    public function _for(DOMElement $element)
     {
         $from = $this->requiredAttr($element, 'from', false);
         $to = $this->requiredAttr($element, 'to', false);
@@ -476,7 +476,7 @@ class CoreTag extends PHPSTLNSHandler
      * @param string value required - the value to set
      * @param string var required - the name of the variable to set
      */
-    public function set(DOMElement &$element)
+    public function set(DOMElement $element)
     {
         $value = $this->requiredAttr($element, 'value');
         $var = $this->requiredAttr($element, 'var', false);
@@ -519,7 +519,7 @@ class CoreTag extends PHPSTLNSHandler
      *                 "boolean" => formats as Yes or No
      *                 "date:xxx" => formats as date, where xxx is the format string used by date()
      */
-    public function out(DOMElement &$element)
+    public function out(DOMElement $element)
     {
         $value = $this->requiredAttr($element, 'value');
         $escapeXml = $this->getBooleanAttr($element, 'escapeXml', true);
@@ -565,12 +565,12 @@ class CoreTag extends PHPSTLNSHandler
      * @param string encoding optional - the XML encoding, default is utf-8
      * @param string version optional - the XML version, default is 1.0
      *
-     * @see CoreTag::BuildXMLHeader
+     * @see PHPSTLCoreHandler::BuildXMLHeader
      */
-    public function xmlHeader(DOMElement &$element)
+    public function xmlHeader(DOMElement $element)
     {
         $this->compiler->write(
-            "<?php echo CoreTag::BuildXMLHeader(".$this->argList(array(
+            "<?php echo PHPSTLCoreHandler::BuildXMLHeader(".$this->argList(array(
                 $this->getAttr($element, 'version'),
                 $this->getAttr($element, 'encoding')
             ))."); ?>"
@@ -585,10 +585,10 @@ class CoreTag extends PHPSTLNSHandler
      * @param string access optional
      * @param string url optional
      *
-     * See CoreTag::$Doctypes for shortcut ids
-     * @see CoreTag::BuildDoctype, CoreTag::$Doctypes
+     * See PHPSTLCoreHandler::$Doctypes for shortcut ids
+     * @see PHPSTLCoreHandler::BuildDoctype, PHPSTLCoreHandler::$Doctypes
      */
-    public function doctype(DOMElement &$element)
+    public function doctype(DOMElement $element)
     {
         if ($element->hasAttribute('type')) {
             // Old style
@@ -603,7 +603,7 @@ class CoreTag extends PHPSTLNSHandler
             $url    = $this->getAttr($element, 'url');
         }
         $this->compiler->write(
-            "<?php echo CoreTag::BuildDoctype(".
+            "<?php echo PHPSTLCoreHandler::BuildDoctype(".
             $this->argList(array($id, $root, $access, $url)).
             "); ?>"
         );
@@ -635,7 +635,7 @@ class CoreTag extends PHPSTLNSHandler
      * @param simple boolean default false, if true don't process the
      * <core:cdata /> children, simpley output its textContent
      */
-    public function cdata(DOMElement &$element)
+    public function cdata(DOMElement $element)
     {
         if ($this->getBooleanAttr($element, 'simple', false)) {
             $this->compiler->write('<![CDATA['.$element->textContent.']]>');
@@ -653,7 +653,7 @@ class CoreTag extends PHPSTLNSHandler
      * @param object var the variable to dump
      * @param boolean pre set to false to not include the <pre> wrap
      */
-    public function dump(DOMElement &$element)
+    public function dump(DOMElement $element)
     {
         $object = $this->requiredAttr($element, 'var', false);
         $pre = $this->getBooleanAttr($element, 'pre', true);
@@ -666,7 +666,7 @@ class CoreTag extends PHPSTLNSHandler
         }
     }
 
-    public static function RenderTemplate(PHPSTLTemplate &$template, $resource, $args)
+    public static function RenderTemplate(PHPSTLTemplate $template, $resource, $args)
     {
         assert(is_array($args));
         $sub = $template->getProvider()->getPHPSTL()->load($resource);
@@ -677,7 +677,7 @@ class CoreTag extends PHPSTLNSHandler
      * Processes another template
      * @param resource the template resource to process
      */
-    public function render(DOMElement &$element)
+    public function render(DOMElement $element)
     {
         $res = $this->requiredAttr($element, 'resource');
         $args = array();
@@ -698,7 +698,7 @@ class CoreTag extends PHPSTLNSHandler
             }
         }
         $args = "array(\n  ".implode(",\n  ", $args).")";
-        $this->compiler->write("<?php CoreTag::RenderTemplate(\$this, $res, $args); ?>");
+        $this->compiler->write("<?php PHPSTLCoreHandler::RenderTemplate(\$this, $res, $args); ?>");
     }
 }
 

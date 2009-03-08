@@ -1,5 +1,5 @@
 <template
-  xmlns:core="class://CoreTag"
+  xmlns:core="urn:redtree:php-stl:core:v2.0"
   core:extends="coretestext">
 
 <core:param name="when" type="int" default="@{time()}" />
