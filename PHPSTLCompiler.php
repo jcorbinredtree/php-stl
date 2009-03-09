@@ -231,20 +231,22 @@ class PHPSTLCompiler
             }
             break;
         case XML_ELEMENT_NODE:
+            $attrs = array();
             foreach ($node->attributes as $name => $attr) {
                 if (isset($attr->namespaceURI)) {
                     $handler = $this->handleNamespace($attr->namespaceURI);
                     $val = $handler->handle($attr);
                     $node->removeAttributeNode($attr);
                     if (isset($val)) {
-                        $node->setAttribute($attr->name, $val);
+                        $attrs[$attr->name] = $val;
                     }
+                } else {
+                    $attrs[$attr->name] = $attr->value;
                 }
             }
             if ($node === $this->dom->documentElement) {
-                $attrs = array();
-                foreach ($node->attributes as $name => $attr) {
-                    $this->meta[$name] = $attr->value;
+                foreach ($attrs as $name => $value) {
+                    $this->meta[$name] = $value;
                 }
             } elseif (isset($node->namespaceURI)) {
                 $processChildren = false;
@@ -252,10 +254,8 @@ class PHPSTLCompiler
                 $handler->handle($node);
             } else {
                 $start = "<$node->nodeName";
-                if ($node->hasAttributes()) {
-                    foreach ($node->attributes as $attr) {
-                        $start .= " $attr->name=\"$attr->value\"";
-                    }
+                foreach ($attrs as $name => $value) {
+                    $start .= " $name=\"$value\"";
                 }
                 if (
                     $node->hasChildNodes() && (
