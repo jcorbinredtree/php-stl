@@ -178,7 +178,7 @@ class PHPSTLCompiler
                 $lines = explode("\n", $body);
                 for ($i=0; $i<count($lines); $i++) {
                     if ($i == 0) {
-                        $buf .= '/* '.$lines[$i]."\n";
+                        $buf = '/* '.$lines[$i]."\n";
                     } else {
                         $buf .= ' * '.$lines[$i]."\n";
                     }
