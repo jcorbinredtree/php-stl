@@ -246,10 +246,14 @@ class PHPSTLCompiler
                         $start .= " $attr->name=\"$attr->value\"";
                     }
                 }
-                if (! in_array($node->nodeName, self::$HTMLSingleTags)) {
+                if (
+                    $node->hasChildNodes() &&
+                    ! in_array($node->nodeName, self::$HTMLSingleTags)
+                ) {
                     $start .= '>';
                     $end = "</$node->nodeName>";
                 } else {
+                    $processChildren = false;
                     $start .= ' />';
                 }
                 $this->write($start);
@@ -257,11 +261,7 @@ class PHPSTLCompiler
             break;
         }
 
-        if (
-            $processChildren &&
-            $node->hasChildNodes() &&
-            ! in_array($node->nodeName, self::$HTMLSingleTags)
-        ) {
+        if ($processChildren && $node->hasChildNodes()) {
             foreach ($node->childNodes as $child) {
                 $this->process($child);
             }
