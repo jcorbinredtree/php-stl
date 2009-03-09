@@ -99,7 +99,7 @@ abstract class PHPSTLTemplateCache
      * If exists would return fales for this template, this should throw a
      * RuntimeException
      *
-     * @param template PHPSTLTemplate
+     * @param PHPSTLTemplate $template
      * @return string as in store
      * @see store
      */
@@ -108,8 +108,8 @@ abstract class PHPSTLTemplateCache
     /**
      * Stores a template in the cache
      *
-     * @param template PHPSTLTemplate
-     * @param compiled string the compiled content to cache
+     * @param PHPSTLTemplate $template
+     * @param string $compiled the compiled content to cache
      * @return string the file path suitable for passing to include() to
      * process the template
      */

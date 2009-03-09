@@ -176,9 +176,8 @@ class PHPSTLDiskCache extends PHPSTLTemplateCache
      * If exists would return fales for this template, this should throw a
      * RuntimeException
      *
-     * @param template PHPSTLTemplate
-     * @return string the file path suitable for passing to include() to
-     * process the template
+     * @param PHPSTLTemplate $template
+     * @return string as in store
      * @see PHPSTLTemplateCache::fetch
      */
     public function fetch(PHPSTLTemplate $template)
@@ -193,8 +192,9 @@ class PHPSTLDiskCache extends PHPSTLTemplateCache
     /**
      * Stores a template in the cache
      *
-     * @param template PHPSTLTemplate
-     * @param compiled string the compiled content to cache
+     * @param PHPSTLTemplate $template
+     * @param string $compiled the compiled content to cache
+     * @return string path to compiled content
      * @see PHPSTLTemplateCache::store
      */
     public function store(PHPSTLTemplate $template, $compiled)
