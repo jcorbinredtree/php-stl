@@ -108,23 +108,44 @@ abstract class PHPSTLNSHandler
     final protected function callHandleMethod($method, DOMNode $node)
     {
         if (! method_exists($this, $method)) {
-            if ($node->nodeType == XML_ELEMENT_NODE) {
-                $what = "$node->nodeName";
-            } elseif ($node->nodeType == XML_ATTRIBUTE_NODE) {
-                $what = $node->ownerElement->nodeName."/@$node->nodeName";
-            } else {
-                $what = $node->nodeName;
-            }
-            $what .= ", xmlns:$node->prefix=\"$this->namespace\"";
-            while ($node->parentNode !== $node->ownerDocument) {
-                $node = $node->parentNode;
-                $what = $node->nodeName."/$what";
-            }
             throw new PHPSTLCompilerException($this->compiler,
-                "Cannot handle /$what, tried ".get_class($this)."->$method"
+                'Cannot handle '.$this->pathString($node).
+                ', tried '.get_class($this)."->$method"
             );
         }
         return $this->$method($node);
+    }
+
+    /**
+     * Returns a representative path string for the given DOMNode like:
+     *   /root/el/el/@attr
+     *   /root/el/text()
+     *
+     * @param DOMNode $node
+     * @return string
+     */
+    protected function pathString(DOMNode $node)
+    {
+        switch ($node->nodeType) {
+        case XML_TEXT_NODE:
+        case XML_CDATA_SECTION_NODE:
+            $what = 'text()';
+            break;
+        case XML_ATTRIBUTE_NODE:
+            $what = $node->ownerElement->nodeName.'/@'.$node->nodeName;
+            break;
+        default:
+            $what = $node->nodeName;
+            break;
+        }
+        $what = sprintf('%s, xmlns:%s="%s"',
+            $what, $node->prefix, $this->namespace
+        );
+        while ($node->parentNode !== $node->ownerDocument) {
+            $node = $node->parentNode;
+            $what = $node->nodeName.'/'.$what;
+        }
+        return '/'.$what;
     }
 
     /**
@@ -185,9 +206,10 @@ abstract class PHPSTLNSHandler
      */
     protected function requiredAttr(DOMElement $element, $attr, $quote=true)
     {
-        if (!$element->hasAttribute($attr)) {
+        if (! $element->hasAttribute($attr)) {
             throw new InvalidArgumentException(
-                "required attribute $attr missing from element $element->nodeName"
+                'missing required attribute '.
+                $this->pathString($element)."/@$attr"
             );
         }
 
@@ -250,7 +272,8 @@ abstract class PHPSTLNSHandler
 
         if (! isset($bool)) {
             throw new InvalidArgumentException(
-                "Invalid boolean attribute $attr specified for $element->nodeName"
+                'invalid boolean attribute '.
+                $this->pathString($element)."/@$attr"
             );
         }
 
