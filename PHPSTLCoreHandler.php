@@ -700,6 +700,21 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
         $args = "array(\n  ".implode(",\n  ", $args).")";
         $this->compiler->write("<?php PHPSTLCoreHandler::RenderTemplate(\$this, $res, $args); ?>");
     }
+
+    /**
+     * Pass through for xmlns attributes, examlpe:
+     *   <html core:xmlns="http://www.w3.org/1999/xhtml">
+     *
+     * Outputs:
+     *   <html xmlns="http://www.w3.org/1999/xhtml">
+     *
+     * The value of the attribute is arbitrary and is simply passed through to
+     * the output
+     */
+    public function handleAttrXmlns(DOMAttr $attr)
+    {
+        return $attr->value;
+    }
 }
 
 // crappy json_encode for php <5.2.0
