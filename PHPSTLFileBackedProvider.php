@@ -45,7 +45,7 @@ abstract class PHPSTLFileBackedProvider extends PHPSTLTemplateProvider
     {
         $path = $this->getResourceFile($resource);
         if (isset($path)) {
-            return $this->createTemplate($resource, $path);
+            return $this->createTemplate($resource, $path, "file://$path");
         } else {
             return PHPSTLTemplateProvider::DECLINE;
         }
