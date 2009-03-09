@@ -230,7 +230,9 @@ class PHPSTLCompiler
                     $handler = $this->handleNamespace($attr->namespaceURI);
                     $val = $handler->handle($attr);
                     $node->removeAttributeNode($attr);
-                    $node->setAttribute($attr->name, $val);
+                    if (isset($val)) {
+                        $node->setAttribute($attr->name, $val);
+                    }
                 }
             }
             if ($node === $this->dom->documentElement) {
