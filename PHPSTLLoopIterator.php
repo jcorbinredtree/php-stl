@@ -39,7 +39,9 @@ class PHPSTLLoopIterator
     {
         $this->list = $list;
         $this->count = count($this->list);
-        $this->current = $this->list[0];
+        if ($this->count > 0) {
+            $this->current = $this->list[0];
+        }
     }
 
     public function isFirst()
