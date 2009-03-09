@@ -131,7 +131,10 @@ class PHPSTLCompiler
      * Compiles a template
      *
      * @param template PHPSTLTemplate template to compile
-     * @return string the location of the cache file
+     * @return array containing two paths:
+     * array($metaCache, $contentCache)
+     * - $metaCache: path to a serialized associative array containing meta data
+     * - $contentCache: path to the compiled php
      */
     public function compile(PHPSTLTemplate &$template)
     {
@@ -145,9 +148,12 @@ class PHPSTLCompiler
                 $ret = $cache->fetch($template);
             } else {
                 $content = $this->template->getContent();
-                $content = $this->parse($content);
-                $ret = $cache->store($template, $content);
+                list($meta, $content) = $this->parse($content);
+                $meta['cacheName'] = $cache->cacheName($template);
+                $ret = $cache->store($template, $meta, $content);
             }
+            assert(is_array($ret));
+            assert(count($ret) == 2);
             $this->template = null;
             return $ret;
         } catch (Exception $ex) {
@@ -236,7 +242,10 @@ class PHPSTLCompiler
                 }
             }
             if ($node === $this->dom->documentElement) {
-                // noop
+                $attrs = array();
+                foreach ($node->attributes as $name => $attr) {
+                    $this->meta[$name] = $attr->value;
+                }
             } elseif (isset($node->namespaceURI)) {
                 $processChildren = false;
                 $handler = $this->handleNamespace($node->namespaceURI);
@@ -249,8 +258,10 @@ class PHPSTLCompiler
                     }
                 }
                 if (
-                    $node->hasChildNodes() &&
-                    ! in_array($node->nodeName, self::$HTMLSingleTags)
+                    $node->hasChildNodes() && (
+                        $this->meta['type'] != 'text/html' ||
+                        ! in_array($node->nodeName, self::$HTMLSingleTags)
+                    )
                 ) {
                     $start .= '>';
                     $end = "</$node->nodeName>";
@@ -438,11 +449,15 @@ class PHPSTLCompiler
         try {
             $this->whitespace = self::WHITESPACE_COLLAPSE;
             $this->stash = array();
+            $this->meta = array();
             $this->buffer = '';
             $this->footerBuffer = '';
             $this->handlers = array();
             $this->dom = new DOMDocument();
             $this->dom->preserveWhiteSpace = true;
+
+            $this->meta['uri'] = (string) $this->template;
+            $this->meta['type'] = 'text/html';
 
             if (!$this->dom->loadXML($contents)) {
                 die("failed to parse $this->template");
@@ -454,10 +469,11 @@ class PHPSTLCompiler
             $this->process($this->dom);
             $this->writeTemplateFooter();
 
-            $ret = $this->unstashPHP(trim($this->buffer));
+            $meta = $this->meta;
+            $content = $this->unstashPHP(trim($this->buffer));
 
             $this->cleanupParse();
-            return $ret;
+            return array($meta, $content);
         } catch (Exception $ex) {
             $this->cleanupParse();
             throw $ex;
@@ -473,6 +489,7 @@ class PHPSTLCompiler
     {
         $this->whitespace = self::WHITESPACE_COLLAPSE;
         $this->stash = null;
+        $this->meta = null;
         $this->buffer = null;
         $this->footerBuffer = null;
         $this->dom = null;

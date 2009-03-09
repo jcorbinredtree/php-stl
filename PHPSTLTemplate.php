@@ -201,6 +201,27 @@ class PHPSTLTemplate
     }
 
     /**
+     * Gets template meta data
+     *
+     * @param string $key if set returns the value of the keyed data item, if
+     * null returns the entire associative array
+     *
+     * @return mixed
+     */
+    public function getMeta($key=null)
+    {
+        if (! isset($this->meta)) {
+            $this->compile();
+        }
+        if (isset($key)) {
+            return array_key_exists($key, $this->meta)
+                ? $this->meta[$key] : null;
+        } else {
+            return $this->meta;
+        }
+    }
+
+    /**
      * Gets the compiled form of this template
      *
      * @see $compiled, PHPSTLCompiler::compile
@@ -209,23 +230,35 @@ class PHPSTLTemplate
     public function getCompiled()
     {
         if (! isset($this->compiled)) {
-            $pstl = $this->provider->getPHPSTL();
-            $this->compiled = $pstl->getCompiler()->compile($this);
+            $this->compile();
         }
         return $this->compiled;
     }
 
+    final protected function compile()
+    {
+        $pstl = $this->provider->getPHPSTL();
+        list($this->meta, $this->compiled) =
+            $pstl->getCompiler()->compile($this);
+        $meta = unserialize(@file_get_contents($this->meta));
+        if (! isset($meta) || ! is_array($meta)) {
+            $mess = "Failed to read meta data from $this->meta";
+            $this->meta = $this->compiled = null;
+            throw new RuntimeException($mess);
+        }
+        $this->meta = $meta;
+    }
+
     /**
-     * Convenience method
-     *   Equivalent to:
-     *     $template->getProvider()->getPHPSTL()->getCache()->cacheName($template)
-     *
      * @return string the cacheName for this template
      * @see PHPSTLTemplateCache::cacheName
      */
     public function cacheName()
     {
-        return $this->provider->getPHPSTL()->getCache()->cacheName($this);
+        if (! isset($this->meta)) {
+            $this->compile();
+        }
+        return $this->meta['cacheName'];
     }
 
     /**

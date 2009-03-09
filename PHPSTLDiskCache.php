@@ -127,20 +127,22 @@ class PHPSTLDiskCache extends PHPSTLTemplateCache
     /**
      * Returns the cacheFile, see $hashed for details
      *
+     * @return two element array containing meta and content paths
      * @see $hashed, $directory, cacheName
      */
     private function cacheFile(PHPSTLTemplate $template)
     {
         $name = $this->cacheName($template);
         if ($this->hashed) {
-            return implode('/', array(
+            $file = implode('/', array(
                 $this->directory,
                 substr($name, 0, 2),
                 substr($name, 2)
-            )).'.php';
+            ));
         } else {
-            return "$this->directory/$name.php";
+            $file = "$this->directory/$name";
         }
+        return array("$file.meta", "$file.php");
     }
 
     /**
@@ -150,7 +152,8 @@ class PHPSTLDiskCache extends PHPSTLTemplateCache
      */
     public function exists(PHPSTLTemplate $template)
     {
-        return file_exists($this->cacheFile($template));
+        list($meta, $content) = $this->cacheFile($template);
+        return file_exists($meta) && file_exists($content);
     }
 
 
@@ -161,9 +164,10 @@ class PHPSTLDiskCache extends PHPSTLTemplateCache
      */
     public function isCached(PHPSTLTemplate $template)
     {
-        $file = $this->cacheFile($template);
-        if (file_exists($file)) {
-            return $template->getLastModified() < filemtime($file);
+        list($meta, $content) = $this->cacheFile($template);
+        if (file_exists($meta) && file_exists($content)) {
+            $cachemtime = min(filemtime($meta), filemtime($content));
+            return $template->getLastModified() < $cachemtime;
         } else {
             return false;
         }
@@ -177,36 +181,49 @@ class PHPSTLDiskCache extends PHPSTLTemplateCache
      * RuntimeException
      *
      * @param PHPSTLTemplate $template
-     * @return string as in store
+     * @return array as in store
      * @see PHPSTLTemplateCache::fetch
      */
     public function fetch(PHPSTLTemplate $template)
     {
-        $file = $this->cacheFile($template);
-        if (! file_exists($file)) {
-            throw new RuntimeException('no cached template');
+        list($meta, $content) = $this->cacheFile($template);
+        if (! file_exists($meta)) {
+            throw new RuntimeException('no cached meta data');
         }
-        return $file;
+        if (! file_exists($content)) {
+            throw new RuntimeException('no cached content');
+        }
+        return array($meta, $content);
     }
 
     /**
      * Stores a template in the cache
      *
      * @param PHPSTLTemplate $template
-     * @param string $compiled the compiled content to cache
-     * @return string path to compiled content
+     * @param array $meta
+     * @param string $content the compiled content to cache
+     * @return array containing two paths:
+     * array($metaCache, $contentCache)
+     * - $metaCache: path to a serialized associative array containing meta data
+     * - $contentCache: path to the compiled php
      * @see PHPSTLTemplateCache::store
      */
-    public function store(PHPSTLTemplate $template, $compiled)
+    public function store(PHPSTLTemplate $template, $meta, $content)
     {
-        $file = $this->cacheFile($template);
-        ob_start();
-        if (! file_put_contents($file, $compiled)) {
-            $mess = ob_get_clean();
-            throw new RuntimeException("Could not write $file: $mess");
+        list($metaFile, $contentFile) = $this->cacheFile($template);
+
+        if (! @file_put_contents($metaFile, serialize($meta))) {
+            throw new RuntimeException(
+                "could not write meta data to $metaFile"
+            );
         }
-        ob_end_clean();
-        return $file;
+        if (! @file_put_contents($contentFile, $content)) {
+            throw new RuntimeException(
+                "could not write content to $contentFile"
+            );
+        }
+
+        return array($metaFile, $contentFile);
     }
 
     /**

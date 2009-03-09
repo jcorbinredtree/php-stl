@@ -100,7 +100,7 @@ abstract class PHPSTLTemplateCache
      * RuntimeException
      *
      * @param PHPSTLTemplate $template
-     * @return string as in store
+     * @return array as from store
      * @see store
      */
     abstract public function fetch(PHPSTLTemplate $template);
@@ -109,11 +109,14 @@ abstract class PHPSTLTemplateCache
      * Stores a template in the cache
      *
      * @param PHPSTLTemplate $template
+     * @param array $meta
      * @param string $compiled the compiled content to cache
-     * @return string the file path suitable for passing to include() to
-     * process the template
+     * @return array containing two paths:
+     * array($metaCache, $contentCache)
+     * - $metaCache: path to a serialized associative array containing meta data
+     * - $contentCache: path to the compiled php
      */
-    abstract public function store(PHPSTLTemplate $template, $compiled);
+    abstract public function store(PHPSTLTemplate $template, $meta, $compiled);
 
     /**
      * Clears the cache completely
