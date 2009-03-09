@@ -202,9 +202,10 @@ abstract class PHPSTLNSHandler
      * @param DOMElement $element the target element
      * @param string $attr the attribute key
      * @param boolean $quote true if the value should be quoted [default]
+     * @param boolean $expand whether to expand expressions in the value
      * @return the attribute value for key $attr
      */
-    protected function requiredAttr(DOMElement $element, $attr, $quote=true)
+    protected function requiredAttr(DOMElement $element, $attr, $quote=true, $expand=true)
     {
         if (! $element->hasAttribute($attr)) {
             throw new InvalidArgumentException(
@@ -212,10 +213,12 @@ abstract class PHPSTLNSHandler
                 $this->pathString($element)."/@$attr"
             );
         }
-
         $value = $element->getAttribute($attr);
         if ($quote) {
             $value = $this->quote($value);
+        }
+        if ($expand) {
+            $value = $this->expand($value);
         }
         return $value;
     }
@@ -226,12 +229,18 @@ abstract class PHPSTLNSHandler
      * @param DOMElement $element the target element
      * @param string $attr the attribute key
      * @param mixed $default the default value
+     * @param boolean $expand whether to expand expressions in the value
      * @return the attribute value for key $attr
      */
-    protected function getAttr(DOMElement $element, $attr, $default=null)
+    protected function getAttr(DOMElement $element, $attr, $default=null, $expand=true)
     {
         if ($element->hasAttribute($attr)) {
-            return $this->quote($element->getAttribute($attr));
+            $value = $element->getAttribute($attr);
+            $value = $this->quote($value);
+            if ($expand) {
+                $value = $this->expand($value);
+            }
+            return $value;
         } else {
             return $this->quote($default);
         }
@@ -243,12 +252,18 @@ abstract class PHPSTLNSHandler
      * @param DOMElement $element the target element
      * @param string $attr the attribute key
      * @param mixed $default the default value
+     * @param boolean $expand whether to expand expressions in the value
      * @return the attribute value for key $attr
      */
-    protected function getUnquotedAttr(DOMElement $element, $attr, $default=null)
+    protected function getUnquotedAttr(DOMElement $element, $attr, $default=null, $expand=true)
     {
         if ($element->hasAttribute($attr)) {
-            return $element->getAttribute($attr);
+            $value = $element->getAttribute($attr);
+            if ($expand) {
+                return $this->expand($value);
+            } else {
+                return $value;
+            }
         } else {
             return $default;
         }
@@ -366,7 +381,11 @@ abstract class PHPSTLNSHandler
      * HTML-style boolean handling is on by default, see getAttributeString for
      * what this means. The $attrs array argument may define a special named
      * member '-no-html-boolean', if set to a true value, will cause boolean
-     * attributes to be emited "normally" rathre than in the html way.
+     * attributes to be emitted "normally" rather than in the html way.
+     *
+     * Expression expansion is performed on attribute values by default, if you
+     * don't want this, then you can specify the special named member
+     * '-no-expand' to true.
      *
      * @param element DOMElement the element
      *
@@ -394,13 +413,21 @@ abstract class PHPSTLNSHandler
             $htmlBoolean = false;
         }
 
+        $expand = true;
+        if (
+            array_key_exists('-no-expand', $attrs) &&
+            $attrs['-no-expand']
+        ) {
+            $expand = false;
+        }
+
         $opts = array();
         foreach ($attrs as $attr => $default) {
             if (is_int($attr)) {
                 $attr = $default;
                 $default = null;
             }
-            $value = $this->getUnquotedAttr($element, $attr, $default);
+            $value = $this->getUnquotedAttr($element, $attr, $default, false);
             if (isset($value)) {
                 $bool = $this->booleanValue($value);
                 if (isset($bool)) {
@@ -411,9 +438,14 @@ abstract class PHPSTLNSHandler
             }
         }
         if ($asArray) {
+            if ($expand) {
+                foreach ($opts as $name => $val) {
+                    $opts[$name] = $this->expand($val);
+                }
+            }
             return $opts;
         } else {
-            return $this->getAttributeString($opts, $htmlBoolean);
+            return $this->getAttributeString($opts, $htmlBoolean, $expand);
         }
     }
 
@@ -426,9 +458,11 @@ abstract class PHPSTLNSHandler
      * @param boolean $htmlBoolean if true, boolean values will be output as
      * ' name="name"' if true or '' if false
      *
+     * @param boolean $expand whether to expand attribute values, defaults true
+     *
      * @return string
      */
-    protected function getAttributeString($attrs, $htmlBoolean=true)
+    protected function getAttributeString($attrs, $htmlBoolean=true, $expand=true)
     {
         assert(is_array($attrs));
         $r = '';
@@ -445,10 +479,32 @@ abstract class PHPSTLNSHandler
                     $r .= " $attr=\"true\"";
                 }
                 continue;
+            } elseif ($expand) {
+                $value = $this->expand($value, true);
             }
             $r .= " $attr=\"$value\"";
         }
         return $r;
+    }
+
+    /**
+     * Expands variable expressions in the given value
+     *
+     * This is used by attribute retreival methos to expand ${...} and @{...}
+     * expressions into real php
+     *
+     * @param string $value
+     *
+     * @param boolean $full defaults false, if true then the expansion will be
+     * done to full <?php ... ?> directives, this usually isn't what you want
+     * since most consumers of attribute values want a value for use in
+     * building a <?php ... ?> block
+     *
+     * @return $value
+     */
+    protected function expand($value, $full=false)
+    {
+        return PHPSTLExpressionParser::expand($value, $full, $full);
     }
 
     /**

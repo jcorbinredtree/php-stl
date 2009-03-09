@@ -22,6 +22,7 @@
  * @link         http://php-stl.redtreesystems.com
  */
 
+require_once dirname(__FILE__).'/PHPSTLExpressionParser.php';
 require_once dirname(__FILE__).'/PHPSTLNSHandler.php';
 
 /**
@@ -156,7 +157,8 @@ class PHPSTLCompiler
             break;
         case XML_TEXT_NODE:
         case XML_CDATA_SECTION_NODE:
-            $this->write($node->nodeValue);
+            $text = PHPSTLExpressionParser::expand($node->nodeValue);
+            $this->write($text);
             break;
         case XML_PI_NODE:
             switch ($node->target) {
@@ -217,7 +219,6 @@ class PHPSTLCompiler
      */
     public function write($out)
     {
-        $out = $this->replaceRules($out);
         $this->buffer .= $out;
     }
 
@@ -254,31 +255,6 @@ class PHPSTLCompiler
             $this->handlers[$namespace] = new $class($this, $namespace);
         }
         return $this->handlers[$namespace];
-    }
-
-    /**
-     * The replacement rules for the "expression" syntax
-     *
-     * @param string $output the current output being written
-     * @return string replaced output
-     */
-    private function replaceRules($output)
-    {
-        $output = preg_replace("/[$][{]([^=]+?)[}]/e", "'\$'.preg_replace('/(?<![.])[.](?![.])/','->','\\1')", $output);
-        $output = preg_replace("/[@][{]([^=]+?)[}]/", '$1', $output);
-
-        $output = preg_replace("/[$][{][=](.+?)[}]/", '<?php echo ${$1}; ?>', $output);
-        $output = preg_replace("/[@][{][=](.+?)[}]/", '<?php echo $1; ?>', $output);
-
-        /*
-         * Yes, this is the same as the first set of regexs
-         * Yes, this is slow
-         * No, it's not a big deal
-         */
-        $output = preg_replace("/[$][{]([^=]+?)[}]/e", "'\$'.preg_replace('/(?<![.])[.](?![.])/','->','\\1')", $output);
-        $output = preg_replace("/[@][{]([^=]+?)[}]/", '$1', $output);
-
-        return $output;
     }
 
     /**
