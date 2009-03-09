@@ -166,7 +166,7 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
 
     public function handleDocumentAttrExtends(DOMAttr $attr)
     {
-        $this->writeExtends($attr->value);
+        $this->writeExtends($this->expand($attr->value));
     }
 
     private function writeExtends($template)
