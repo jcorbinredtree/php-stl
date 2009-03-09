@@ -2,6 +2,12 @@
   xmlns:core="urn:redtree:php-stl:core:v2.0"
   core:extends="coretestext">
 
+<!-- comment test -->
+
+<!--
+multiline
+comment test
+-->
 <core:param name="when" type="int" default="@{time()}" />
 <ul>
   <core:forEach list="@{explode(',', 'a,b,c,d')}" var="i">

@@ -32,6 +32,10 @@ require_once dirname(__FILE__).'/PHPSTLNSHandler.php';
  */
 class PHPSTLCompiler
 {
+    static public $HTMLSingleTags = array(
+        'meta', 'link', 'br', 'hr', 'img', 'input'
+    );
+
     /**
      * @var PHPSTL
      */
@@ -73,6 +77,14 @@ class PHPSTLCompiler
      * @var array
      */
     private $handlers=null;
+
+    const WHITESPACE_PRESERVE = 1;
+    const WHITESPACE_COLLAPSE = 2;
+    const WHITESPACE_TRIM     = 3;
+
+    protected $whitespace = self::WHITESPACE_COLLAPSE;
+
+    private $stash;
 
     /**
      * Constructor
@@ -152,8 +164,27 @@ class PHPSTLCompiler
      */
     public function process(DOMNode $node)
     {
+        $end = null;
+        $processChildren = true;
+
         switch ($node->nodeType) {
+        case XML_DOCUMENT_NODE:
+            break;
         case XML_COMMENT_NODE:
+            $body = trim($node->data);
+            if (strpos($body, "\n") === false) {
+                $this->write("<?php\n// $body\n?>");
+            } else {
+                $lines = explode("\n", $body);
+                for ($i=0; $i<count($lines); $i++) {
+                    if ($i == 0) {
+                        $buf .= '/* '.$lines[$i]."\n";
+                    } else {
+                        $buf .= ' * '.$lines[$i]."\n";
+                    }
+                }
+                $this->write("<?php\n$buf */\n?>");
+            }
             break;
         case XML_TEXT_NODE:
         case XML_CDATA_SECTION_NODE:
@@ -169,6 +200,24 @@ class PHPSTLCompiler
                 }
                 $this->write("<?php $data ?>");
                 break;
+            case 'whitespace':
+                switch (trim($node->data)) {
+                case 'preserve':
+                    $this->whitespace = self::WHITESPACE_PRESERVE;
+                    break;
+                case 'collapse':
+                    $this->whitespace = self::WHITESPACE_COLLAPSE;
+                    break;
+                case 'trim':
+                    $this->whitespace = self::WHITESPACE_TRIM;
+                    break;
+                default:
+                    throw new PHPSTLCompilerException($this,
+                        "invalid <?whitespace $node->data ?>"
+                    );
+                    break;
+                }
+                break;
             default:
                 throw new PHPSTLCompilerException($this,
                     "unknown processing instruction $node->target"
@@ -176,39 +225,96 @@ class PHPSTLCompiler
             }
             break;
         case XML_ELEMENT_NODE:
-            if (isset($node->namespaceURI)) {
+            foreach ($node->attributes as $name => $attr) {
+                if (isset($attr->namespaceURI)) {
+                    $handler = $this->handleNamespace($attr->namespaceURI);
+                    $val = $handler->handle($attr);
+                    $node->removeAttributeNode($attr);
+                    $node->setAttribute($attr->name, $val);
+                }
+            }
+            if ($node === $this->dom->documentElement) {
+                // noop
+            } elseif (isset($node->namespaceURI)) {
+                $processChildren = false;
                 $handler = $this->handleNamespace($node->namespaceURI);
                 $handler->handle($node);
-                return;
-            }
-
-            $this->write("<$node->nodeName");
-
-            if ($node->hasAttributes()) {
-                foreach ($node->attributes as $attr) {
-                    $this->write(' ' . $attr->name . '="' . $attr->value . '"');
-                }
-            }
-
-            // make some exceptions for weirdo tags...
-            if (
-                $node->hasChildNodes() ||
-                in_array($node->nodeName, array(
-                    'meta', 'link', 'br', 'hr', 'img', 'input'
-                ))
-            ) {
-                $this->write('>');
-
-                foreach ($node->childNodes as $child) {
-                    $this->process($child);
-                }
-
-                $this->write("</$node->nodeName>");
             } else {
-                $this->write(' />');
+                $start = "<$node->nodeName";
+                if ($node->hasAttributes()) {
+                    foreach ($node->attributes as $attr) {
+                        $start .= " $attr->name=\"$attr->value\"";
+                    }
+                }
+                if (! in_array($node->nodeName, self::$HTMLSingleTags)) {
+                    $start .= '>';
+                    $end = "</$node->nodeName>";
+                } else {
+                    $start .= ' />';
+                }
+                $this->write($start);
             }
             break;
         }
+
+        if (
+            $processChildren &&
+            $node->hasChildNodes() &&
+            ! in_array($node->nodeName, self::$HTMLSingleTags)
+        ) {
+            foreach ($node->childNodes as $child) {
+                $this->process($child);
+            }
+        }
+
+        if (isset($end)) {
+            $this->write($end);
+        }
+    }
+
+    private function unstashPHP($buffer)
+    {
+        return preg_replace_callback(
+            '/\[\[([0-9a-f]{40})\]\]/s',
+            array($this, 'unstashPHPBlock'),
+            $buffer
+        );
+    }
+
+    private function unstashPHPBlock($matches)
+    {
+        $id = $matches[1];
+        if (isset($id) && array_key_exists($id, $this->stash)) {
+            return $this->stash[$id];
+        } else {
+            return $matches[0];
+        }
+    }
+
+    private function stashPHP($buffer)
+    {
+        return preg_replace_callback(
+            '/<\?php(.+)\?>/s',
+            array($this, 'stashPHPBlock'),
+            $buffer
+        );
+    }
+
+    private function stashPHPBlock($matches)
+    {
+        $buffer = trim($matches[1]);
+        if (! $buffer) {
+            return '';
+        }
+        if (
+            ! preg_match('/[:;}\/]$/', $buffer) &&
+            ! preg_match('/\/\/[^\n]*$/', $buffer)
+        ) {
+            $buffer .= ';';
+        }
+        $key = sha1(uniqid(__CLASS__.'stashPHPBlock'));
+        $this->stash[$key] = $buffer;
+        return "<?php\n[[$key]]\n?>";
     }
 
     /**
@@ -219,7 +325,23 @@ class PHPSTLCompiler
      */
     public function write($out)
     {
+        $out = $this->stashPHP($out);
+
+        switch ($this->whitespace) {
+        case self::WHITESPACE_COLLAPSE:
+            $out = preg_replace('/\s+<\?php/s', ' <?php', $out);
+            $out = preg_replace('/\?>\s+/s', '?> ', $out);
+            break;
+        case self::WHITESPACE_TRIM:
+            $out = preg_replace('/\s+</s', '<', $out);
+            $out = preg_replace('/>\s+/s', '>', $out);
+            $out = trim($out);
+            break;
+        }
         $this->buffer .= $out;
+        $this->buffer = preg_replace(
+            '/\s*\?>\s*<\?php\s*/s', "\n", $this->buffer
+        );
     }
 
     /**
@@ -277,15 +399,16 @@ class PHPSTLCompiler
 
         $len = max(array_map('strlen', array_keys($stats)));
 
-        $this->write("<?php\n/**\n");
+        $head = "<?php\n/**\n";
         foreach ($stats as $title => $value) {
-            $this->write(
+            $head .=
                 " * $title".
                 str_repeat(' ', $len-strlen($title)).
-                " : $value\n"
-            );
+                " : $value\n";
         }
-        $this->write(" */ ?>\n");
+        $head .= " */ ?>\n";
+
+        $this->write($head);
     }
 
     /**
@@ -311,6 +434,8 @@ class PHPSTLCompiler
             throw new RuntimeException('PHPSTLCompiler->parse called recursivley');
         }
         try {
+            $this->whitespace = self::WHITESPACE_COLLAPSE;
+            $this->stash = array();
             $this->buffer = '';
             $this->footerBuffer = '';
             $this->handlers = array();
@@ -324,31 +449,11 @@ class PHPSTLCompiler
             $this->dom->normalizeDocument();
 
             $this->writeTemplateHeader();
-            foreach ($this->dom->documentElement->attributes as $name => $node) {
-                if (isset($node->namespaceURI)) {
-                    $handler = $this->handleNamespace($node->namespaceURI);
-                    $handler->handle($node);
-                }
-            }
-            foreach ($this->dom->documentElement->childNodes as $node) {
-                $this->process($node);
-            }
+            $this->process($this->dom);
             $this->writeTemplateFooter();
 
-            // normalize php blocks
-            $this->buffer = preg_replace('/\s*\?>\s*?<\?php\s*/si', "\n", $this->buffer);
+            $ret = $this->unstashPHP(trim($this->buffer));
 
-            // Collapse whitespace around php directives
-            $this->buffer = preg_replace('/\s+<\?php/s', ' <?php', $this->buffer);
-            $this->buffer = preg_replace('/\?>\s+/s', '?> ', $this->buffer);
-
-            // Leading whitespace
-            $this->buffer = preg_replace('/^\s*(?:(<\?php.*?\?>)\s*)?/si', '$1', $this->buffer);
-
-            // Trailing whitespace
-            $this->buffer = preg_replace('/(?:\s*(<\?php.*?\?>))?\s*$/si', '$1', $this->buffer);
-
-            $ret = $this->buffer;
             $this->cleanupParse();
             return $ret;
         } catch (Exception $ex) {
@@ -364,6 +469,8 @@ class PHPSTLCompiler
      */
     protected function cleanupParse()
     {
+        $this->whitespace = self::WHITESPACE_COLLAPSE;
+        $this->stash = null;
         $this->buffer = null;
         $this->footerBuffer = null;
         $this->dom = null;
