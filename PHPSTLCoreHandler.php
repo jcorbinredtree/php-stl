@@ -416,24 +416,27 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
     {
         $list = $this->requiredAttr($element, 'list');
         $var = $this->requiredAttr($element, 'var', false);
-        $varStatus = $this->getUnquotedAttr($element, 'varStatus', '__loop'.uniqid());
 
         if (preg_match('/,/', $var)) {
             $desc = explode(',', $var);
             $this->compiler->write(
                 "<?php foreach($list as \$$desc[0] => \$$desc[1]) { ?>"
             );
+            $end = '';
         } else {
-            $this->compiler->write(
-                "<?php \$$varStatus = new PHPSTLLoopIterator($list); ".
-                "for(; \$${varStatus}->index < \$${varStatus}->count; \$${varStatus}->index++) { ".
-                "\$${varStatus}->current=\$$var=\$${varStatus}->list[\$${varStatus}->index]; ?>"
-            );
+            $stash = '__loop'.uniqid();
+            $this->compiler->write("<?php\n".
+                "\$$stash = isset(\$loop) ? \$loop : null;\n".
+                "\$loop = new PHPSTLLoopIterator($list);\n".
+                "for(; \$loop->index < \$loop->count; \$loop->index++) {\n".
+                "  \$loop->current = \$$var = \$loop->list[\$loop->index];\n".
+            "\n?>");
+            $end = "\n\$loop = \$$stash; unset(\$$stash);";
         }
 
         $this->process($element);
 
-        $this->compiler->write("<?php } ?>");
+        $this->compiler->write("<?php\n}$end\n?>");
     }
 
     /**
