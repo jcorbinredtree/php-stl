@@ -195,13 +195,17 @@ class PHPSTLCompiler
         case XML_TEXT_NODE:
         case XML_CDATA_SECTION_NODE:
             $text = PHPSTLExpressionParser::expand($node->nodeValue);
+            if ($this->whitespace == self::WHITESPACE_TRIM) {
+                $text = trim($text);
+                $text = preg_replace('/\s+/s', ' ', $text);
+            }
             $this->write($text);
             break;
         case XML_PI_NODE:
             switch ($node->target) {
             case 'php':
                 $data = trim($node->data);
-                if (! preg_match('/[:;}]$/', $data)) {
+                if (! preg_match('/[:;{}]$/', $data)) {
                     $data .= ';';
                 }
                 $this->write("<?php $data ?>");
@@ -307,7 +311,7 @@ class PHPSTLCompiler
     private function stashPHP($buffer)
     {
         return preg_replace_callback(
-            '/<\?php(.+)\?>/s',
+            '/<\?php(.+)\?>/sU',
             array($this, 'stashPHPBlock'),
             $buffer
         );
@@ -320,7 +324,7 @@ class PHPSTLCompiler
             return '';
         }
         if (
-            ! preg_match('/[:;}\/]$/', $buffer) &&
+            ! preg_match('/[:;{}\/]$/', $buffer) &&
             ! preg_match('/\/\/[^\n]*$/', $buffer)
         ) {
             $buffer .= ';';
@@ -346,9 +350,8 @@ class PHPSTLCompiler
             $out = preg_replace('/\?>\s+/s', '?> ', $out);
             break;
         case self::WHITESPACE_TRIM:
-            $out = preg_replace('/\s+</s', '<', $out);
-            $out = preg_replace('/>\s+/s', '>', $out);
-            $out = trim($out);
+            $out = preg_replace('/\s+</s', ' <', $out);
+            $out = preg_replace('/>\s+/s', '> ', $out);
             break;
         }
         $this->buffer .= $out;
