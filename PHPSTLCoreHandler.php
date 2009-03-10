@@ -509,6 +509,18 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
         }
     }
 
+    static public function GetRepr($value)
+    {
+        if (is_object($value)) {
+            $value = get_class($value).' Object';
+        } elseif (is_string($value)) {
+            $value = "'".addslashes($value)."'";
+        } else {
+            $value = (string) $value;
+        }
+        return $value;
+    }
+
     /**
      * Prints out a value
      *
@@ -538,12 +550,17 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
             if (substr($format, 0, 5) == 'date:') {
                 $fstr = substr($format, 5);
                 $value = "date('$fstr',$value)";
+            } elseif (substr($format, 0, 8) == 'sprintf:') {
+                $fstr = addslashes(substr($format, 8));
+                $value = "sprintf('$fstr', $value)";
             } elseif ($format == 'int') {
                 $value = "(int) $value";
             } elseif ($format == 'money') {
                 $value = "money_format('%n', $value)";
             } elseif ($format == 'boolean') {
                 $value = "($value?'Yes':'No')";
+            } elseif ($format == 'repr') {
+                $value = __CLASS__."::GetRepr($value)";
             } else {
                 throw new PHPSTLCompilerException($this->compiler,
                     "invalid <core:out> format '$format'"
