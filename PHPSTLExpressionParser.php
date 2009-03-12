@@ -86,10 +86,43 @@ class PHPSTLExpressionParser
      *
      * @return string the expanded result
      */
-    public static function expand($buffer, $echoOk=true, $phpWrap=true)
+    public static function expand($buffer, $echoOk=true, $phpWrap=true, $quote=false)
     {
+        if ($quote) {
+            $echoOk = $phpWrap = false;
+        }
         $expn = new self($echoOk, $phpWrap);
         $buffer = $expn->stashExpressions($buffer);
+        if ($quote) {
+            $matches = array();
+            $n = preg_match_all("/(.*)(\[\[[0-9a-f]{40}\]\])/U",
+              $buffer, $matches, PREG_OFFSET_CAPTURE
+            );
+            if ($n) {
+              $b = '';
+              $last = null;
+              for ($i=0; $i<$n; $i++) {
+                  if (strlen($b)) {
+                      $b .= " . ";
+                  }
+                  $str = $matches[1][$i][0];
+                  if ($str) {
+                      $b .= "'".addslashes($str)."'";
+                  }
+
+                  if (strlen($b)) {
+                      $b .= " . ";
+                  }
+                  $last = $matches[2][$i];
+                  $b .= $last[0];
+                  $last = $last[1] + strlen($last[0]);
+              }
+              if (isset($last) && $last < strlen($buffer)) {
+                $b .= " . '".addslashes(substr($buffer, $last))."'";
+              }
+              $buffer = $b;
+            }
+        }
         $buffer = $expn->unstashExpressions($buffer);
         return $buffer;
     }
