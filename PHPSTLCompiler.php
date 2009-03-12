@@ -253,6 +253,9 @@ class PHPSTLCompiler
                     $this->meta[$name] = $value;
                 }
             } elseif (isset($node->namespaceURI)) {
+                foreach ($attrs as $name => $value) {
+                    $node->setAttribute($name, $value);
+                }
                 $processChildren = false;
                 $handler = $this->handleNamespace($node->namespaceURI);
                 $handler->handle($node);
