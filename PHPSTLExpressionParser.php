@@ -23,7 +23,7 @@
  */
 
 /**
- * Expands expressinos for PHPSTLCompiler and co
+ * Expands expressions for PHPSTLCompiler and co
  *
  * An expression is a string of one of the following four formats:
  *   ${obj.prop} or ${obj.method()}
