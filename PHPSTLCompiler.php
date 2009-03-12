@@ -261,12 +261,14 @@ class PHPSTLCompiler
                 foreach ($attrs as $name => $value) {
                     $start .= " $name=\"$value\"";
                 }
-                if (
-                    $node->hasChildNodes() && (
-                        $this->meta['type'] != 'text/html' ||
-                        ! in_array($node->nodeName, self::$HTMLSingleTags)
-                    )
-                ) {
+                $isHtml = $this->meta['type'] == 'text/html';
+                if ((
+                    ! $isHtml &&
+                    $node->hasChildNodes()
+                ) || (
+                    $isHtml &&
+                    ! in_array($node->nodeName, self::$HTMLSingleTags)
+                )) {
                     $start .= '>';
                     $end = "</$node->nodeName>";
                 } else {
