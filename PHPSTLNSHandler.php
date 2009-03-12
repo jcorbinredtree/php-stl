@@ -507,7 +507,7 @@ abstract class PHPSTLNSHandler
      */
     protected function expand($value, $full=false)
     {
-        return PHPSTLExpressionParser::expand($value, $full, $full);
+        return PHPSTLExpressionParser::expand($value, $full, $full, !$full);
     }
 
     /**
