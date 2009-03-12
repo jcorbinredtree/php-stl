@@ -124,7 +124,7 @@ abstract class PHPSTLNSHandler
      * @param DOMNode $node
      * @return string
      */
-    protected function pathString(DOMNode $node)
+    protected function pathString(DOMNode $node, $suffix=null)
     {
         switch ($node->nodeType) {
         case XML_TEXT_NODE:
@@ -132,11 +132,14 @@ abstract class PHPSTLNSHandler
             $what = 'text()';
             break;
         case XML_ATTRIBUTE_NODE:
-            $what = $node->ownerElement->nodeName.'/@'.$node->nodeName;
+            $what = '@'.$node->nodeName;
             break;
         default:
             $what = $node->nodeName;
             break;
+        }
+        if (isset($suffix)) {
+            $what .= $suffix;
         }
         $what = sprintf('%s, xmlns:%s="%s"',
             $what, $node->prefix, $this->namespace
@@ -210,7 +213,7 @@ abstract class PHPSTLNSHandler
         if (! $element->hasAttribute($attr)) {
             throw new InvalidArgumentException(
                 'missing required attribute '.
-                $this->pathString($element)."/@$attr"
+                $this->pathString($element, "/@$attr")
             );
         }
         $value = $element->getAttribute($attr);
