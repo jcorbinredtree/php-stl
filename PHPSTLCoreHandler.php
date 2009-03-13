@@ -551,6 +551,18 @@ class PHPSTLCoreHandler extends PHPSTLNSHandler
                 $fstr = substr($format, 5);
                 $value = "date('$fstr',$value)";
             } elseif (substr($format, 0, 8) == 'sprintf:') {
+                $value = $this->requiredAttr($element, 'value', false, false);
+                if ($this->needsQuote($value)) {
+                    $value = $this->quote($value);
+                } else {
+                    $value = implode(', ',
+                        array_map(array($this, 'quote'),
+                            array_map(array($this, 'expand'),
+                                preg_split('/,\s*/', $value)
+                            )
+                        )
+                    );
+                }
                 $fstr = addslashes(substr($format, 8));
                 $value = "sprintf('$fstr', $value)";
             } elseif ($format == 'int') {
